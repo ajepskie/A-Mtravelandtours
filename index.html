@@ -678,7 +678,10 @@
     // ── SUPABASE CONFIG — Add your credentials ──
     const SUPABASE_URL = 'https://erflzptoneomuijkldaq.supabase.co'; // e.g. https://xxxxx.supabase.co
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyZmx6cHRvbmVvbXVpamtsZGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzQ1MDAsImV4cCI6MjA5MTc1MDUwMH0.Nbwnnvx1cJonojdRuoEtWaqBDhIakOHvhjQ5taW1FTY';   // e.g. eyJhbGciOi...
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let supabase = null;
+    if (window.supabase) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
 
     // ── WHATSAPP NUMBER — replace with your actual number ──
     const WHATSAPP_NUMBER = '971564718805'; // e.g. 639171234567
@@ -694,18 +697,18 @@
 
       // Save to Supabase
       try {
-        const { error } = await supabase.from('Leads').insert([
-          {
-            name: name,
-            phone: phone,
-            trip_type: trip,
-            created_at: new Date().toISOString()
+        if (supabase) {
+          const { error } = await supabase.from('Leads').insert([
+            {
+              name: name,
+              phone: phone,
+              trip_type: trip,
+              created_at: new Date().toISOString()
+            }
+          ]);
+          if (error) {
+            console.error('Supabase error:', error);
           }
-        ]);
-
-        if (error) {
-          console.error('Supabase error:', error);
-          // Still proceed with WhatsApp even if DB save fails
         }
       } catch (err) {
         console.error('Error saving to database:', err);
