@@ -671,11 +671,19 @@
   <!-- TOAST -->
   <div class="toast" id="toast">✅ Redirecting to WhatsApp...</div>
 
+  <!-- SUPABASE SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
+    // ── SUPABASE CONFIG — Add your credentials ──
+    const SUPABASE_URL = 'https://erflzptoneomuijkldaq.supabase.co'; // e.g. https://xxxxx.supabase.co
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyZmx6cHRvbmVvbXVpamtsZGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzQ1MDAsImV4cCI6MjA5MTc1MDUwMH0.Nbwnnvx1cJonojdRuoEtWaqBDhIakOHvhjQ5taW1FTY';   // e.g. eyJhbGciOi...
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     // ── WHATSAPP NUMBER — replace with your actual number ──
     const WHATSAPP_NUMBER = '971564718805'; // e.g. 639171234567
 
-    function sendToWhatsApp() {
+    async function sendToWhatsApp() {
       const name  = document.getElementById('fname').value.trim();
       const phone = document.getElementById('fphone').value.trim();
       const trip  = document.getElementById('ftrip').value;
@@ -683,6 +691,25 @@
       if (!name) { alert('Please enter your name.'); return; }
       if (!phone) { alert('Please enter your phone number.'); return; }
       if (!trip)  { alert('Please select your trip type.'); return; }
+
+      // Save to Supabase
+      try {
+        const { error } = await supabase.from('Leads').insert([
+          {
+            name: name,
+            phone: phone,
+            trip_type: trip,
+            created_at: new Date().toISOString()
+          }
+        ]);
+
+        if (error) {
+          console.error('Supabase error:', error);
+          // Still proceed with WhatsApp even if DB save fails
+        }
+      } catch (err) {
+        console.error('Error saving to database:', err);
+      }
 
       const message =
         `Hi WanderPH! 👋\n\n` +
