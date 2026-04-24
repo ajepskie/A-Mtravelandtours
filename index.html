@@ -671,40 +671,39 @@
   <!-- TOAST -->
   <div class="toast" id="toast">✅ Redirecting to WhatsApp...</div>
 
-  <!-- SUPABASE SDK -->
-  <script async defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 🔧 FIX #1: Supabase SDK with explicit success callback -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onload="initSupabaseClient()"></script>
 
   <script>
     // ── SUPABASE CONFIG — Add your credentials ──
     const SUPABASE_URL = 'https://erflzptoneomuijkldaq.supabase.co'; // e.g. https://xxxxx.supabase.co
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyZmx6cHRvbmVvbXVpamtsZGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzQ1MDAsImV4cCI6MjA5MTc1MDUwMH0.Nbwnnvx1cJonojdRuoEtWaqBDhIakOHvhjQ5taW1FTY';   // e.g. eyJhbGciOi...
     
-    // 🔧 FIX #1: Initialize supabase client with proper SDK check
+    // 🔧 FIX #2: Initialize supabase client - CALLED AFTER SDK LOADS
     var supabase = null;
     
-    function initSupabase() {
-      if (window.supabase && window.supabase.createClient && !supabase) {
+    function initSupabaseClient() {
+      if (window.supabase && window.supabase.createClient) {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log('✅ Supabase initialized successfully');
-      } else if (!window.supabase) {
-        console.warn('⚠️ Supabase SDK not loaded yet');
+        console.log('✅ Supabase initialized successfully - Ready to save leads!');
+        return true;
+      } else {
+        console.error('❌ Supabase SDK failed to load');
+        return false;
       }
     }
     
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initSupabase);
-    } else {
-      initSupabase();
-    }
-    
-    // Also try to initialize after SDK loads
-    window.addEventListener('load', initSupabase);
+    // Fallback: Try initializing after page loads if onload hasn't fired
+    window.addEventListener('load', function() {
+      if (!supabase && window.supabase) {
+        initSupabaseClient();
+      }
+    });
 
     // ── WHATSAPP NUMBER — replace with your actual number ──
     const WHATSAPP_NUMBER = '971564718805'; // e.g. 639171234567
 
-    // 🔧 FIX #2: Function with improved Supabase error handling
+    // 🔧 FIX #3: sendToWhatsApp with detailed logging
     function sendToWhatsApp() {
       const name  = document.getElementById('fname').value.trim();
       const phone = document.getElementById('fphone').value.trim();
@@ -714,8 +713,9 @@
       if (!phone) { alert('Please enter your phone number.'); return; }
       if (!trip)  { alert('Please select your trip type.'); return; }
 
-      // 🔧 FIX #3: Better Supabase check with fallback
+      // 🔧 FIX #4: Save to Supabase with better error logging
       if (supabase && typeof supabase.from === 'function') {
+        console.log('💾 Saving lead to Supabase:', {name, phone, trip});
         supabase.from('Leads').insert([
           {
             name: name,
@@ -723,9 +723,17 @@
             trip_type: trip,
             created_at: new Date().toISOString()
           }
-        ]).catch(err => console.error('Error saving to database:', err));
+        ])
+        .then(response => {
+          console.log('✅ Lead saved successfully!', response);
+        })
+        .catch(err => {
+          console.error('❌ Error saving to database:', err);
+          alert('⚠️ Could not save to database, but WhatsApp message will still be sent!');
+        });
       } else {
-        console.warn('⚠️ Supabase not ready yet, skipping database save');
+        console.warn('⚠️ Supabase client not initialized - skipping database save');
+        console.warn('Supabase object:', supabase);
       }
 
       const message =
