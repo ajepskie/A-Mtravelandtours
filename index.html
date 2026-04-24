@@ -672,24 +672,39 @@
   <div class="toast" id="toast">✅ Redirecting to WhatsApp...</div>
 
   <!-- SUPABASE SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script async defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
     // ── SUPABASE CONFIG — Add your credentials ──
     const SUPABASE_URL = 'https://erflzptoneomuijkldaq.supabase.co'; // e.g. https://xxxxx.supabase.co
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyZmx6cHRvbmVvbXVpamtsZGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzQ1MDAsImV4cCI6MjA5MTc1MDUwMH0.Nbwnnvx1cJonojdRuoEtWaqBDhIakOHvhjQ5taW1FTY';   // e.g. eyJhbGciOi...
-    // 🔧 FIX #1: Changed 'let' to 'var' and added null check to prevent redeclaration error
-    if (typeof supabase === 'undefined') {
-      var supabase = null;
-      if (window.supabase) {
+    
+    // 🔧 FIX #1: Initialize supabase client with proper SDK check
+    var supabase = null;
+    
+    function initSupabase() {
+      if (window.supabase && window.supabase.createClient && !supabase) {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('✅ Supabase initialized successfully');
+      } else if (!window.supabase) {
+        console.warn('⚠️ Supabase SDK not loaded yet');
       }
     }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSupabase);
+    } else {
+      initSupabase();
+    }
+    
+    // Also try to initialize after SDK loads
+    window.addEventListener('load', initSupabase);
 
     // ── WHATSAPP NUMBER — replace with your actual number ──
     const WHATSAPP_NUMBER = '971564718805'; // e.g. 639171234567
 
-    // 🔧 FIX #2: Declared functions in global scope (no async/await issues)
+    // 🔧 FIX #2: Function with improved Supabase error handling
     function sendToWhatsApp() {
       const name  = document.getElementById('fname').value.trim();
       const phone = document.getElementById('fphone').value.trim();
@@ -699,8 +714,8 @@
       if (!phone) { alert('Please enter your phone number.'); return; }
       if (!trip)  { alert('Please select your trip type.'); return; }
 
-      // Save to Supabase (non-blocking)
-      if (supabase) {
+      // 🔧 FIX #3: Better Supabase check with fallback
+      if (supabase && typeof supabase.from === 'function') {
         supabase.from('Leads').insert([
           {
             name: name,
@@ -709,6 +724,8 @@
             created_at: new Date().toISOString()
           }
         ]).catch(err => console.error('Error saving to database:', err));
+      } else {
+        console.warn('⚠️ Supabase not ready yet, skipping database save');
       }
 
       const message =
