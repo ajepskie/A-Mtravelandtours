@@ -671,17 +671,13 @@
   <!-- TOAST -->
   <div class="toast" id="toast">✅ Redirecting to WhatsApp...</div>
 
-  <!-- 🔧 FIX #1: Supabase SDK with explicit success callback -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onload="initSupabaseClient()" onerror="handleSDKError()"></script>
-
   <script>
-    // ── SUPABASE CONFIG — Add your credentials ──
-    const SUPABASE_URL = 'https://erflzptoneomuijkldaq.supabase.co'; // e.g. https://xxxxx.supabase.co
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyZmx6cHRvbmVvbXVpamtsZGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzQ1MDAsImV4cCI6MjA5MTc1MDUwMH0.Nbwnnvx1cJonojdRuoEtWaqBDhIakOHvhjQ5taW1FTY';   // e.g. eyJhbGciOi...
-    
-    // 🔧 FIX #2: Initialize supabase client - CALLED AFTER SDK LOADS
+    // 🔧 FIX #1: Define initialization BEFORE loading SDK
     var supabase = null;
     var supabaseReady = false;
+    
+    const SUPABASE_URL = 'https://erflzptoneomuijkldaq.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyZmx6cHRvbmVvbXVpamtsZGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzQ1MDAsImV4cCI6MjA5MTc1MDUwMH0.Nbwnnvx1cJonojdRuoEtWaqBDhIakOHvhjQ5taW1FTY';
     
     console.log('🔍 Supabase Configuration:');
     console.log('URL:', SUPABASE_URL);
@@ -721,7 +717,12 @@
         console.error('❌ Still no Supabase SDK after page load');
       }
     });
+  </script>
 
+  <!-- 🔧 FIX #2: Load SDK AFTER function is defined -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onload="initSupabaseClient()" onerror="handleSDKError()"></script>
+
+  <script>
     // ── WHATSAPP NUMBER — replace with your actual number ──
     const WHATSAPP_NUMBER = '971564718805'; // e.g. 639171234567
 
