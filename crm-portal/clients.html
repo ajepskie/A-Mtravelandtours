@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A-M Travel CRM — Clients</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/crm.css"/>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">A-M <span>Travel</span></div>
+    <div class="sidebar-role" id="sidebarRole">Loading...</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+      <a href="clients.html" class="nav-item active">👥 Clients</a>
+      <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
+    </nav>
+    <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Clients</h1>
+        <p class="page-sub">Manage all client records</p>
+      </div>
+      <a href="add-client.html" class="btn btn-primary">➕ Add Client</a>
+    </div>
+
+    <div class="card">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Search by name, passport, nationality..."/>
+        <select id="statusFilter">
+          <option value="">All Statuses</option>
+          <option>New</option>
+          <option>In Progress</option>
+          <option>Completed</option>
+          <option>Cancelled</option>
+        </select>
+        <select id="tripFilter">
+          <option value="">All Trip Types</option>
+          <option>🏖️ Vacation</option>
+          <option>💼 Business Trip</option>
+          <option>🚨 Emergency Travel</option>
+          <option>✈️ OFW / Balikbayan</option>
+          <option>🌍 Other</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Passport</th>
+              <th>Contact</th>
+              <th>Nationality</th>
+              <th>Trip Type</th>
+              <th>Status</th>
+              <th class="admin-only" style="display:none">Created At</th>
+              <th class="admin-only" style="display:none">Updated At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTable">
+            <tr><td colspan="9" class="empty-row">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- DELETE MODAL -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <h3>🗑️ Delete Client</h3>
+      <p>Are you sure you want to delete <strong id="deleteClientName"></strong>? This action cannot be undone.</p>
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="confirmDelete()">Yes, Delete</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let allClients = [];
+    let currentRole = '';
+    let deleteId = null;
+
+    window.addEventListener('load', async () => {
+      const user = await requireAuth();
+      const profile = await getProfile(user.id);
+      currentRole = profile.role;
+
+      document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
+
+      if (currentRole === 'admin' || currentRole === 'superadmin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+      }
+      if (currentRole === 'superadmin') {
+        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
+      }
+
+      loadClients();
+    });
+
+    async function loadClients() {
+      const { data } = await supabaseClient
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      allClients = data || [];
+      renderClients(allClients);
+    }
+
+    function renderClients(clients) {
+      const tbody = document.getElementById('clientsTable');
+      const isAdmin = currentRole === 'admin' || currentRole === 'superadmin';
+      const canEdit = currentRole === 'admin' || currentRole === 'superadmin';
+
+      if (clients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-row">No clients found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = clients.map(c => `
+        <tr>
+          <td><a href="client-detail.html?id=${c.id}" class="client-link">${c.full_name}</a></td>
+          <td>${c.passport_number || '—'}</td>
+          <td>${c.contact || '—'}</td>
+          <td>${c.nationality || '—'}</td>
+          <td>${c.trip_type || '—'}</td>
+          <td><span class="status-badge status-${slugify(c.status)}">${c.status || '—'}</span></td>
+          ${isAdmin ? `<td class="admin-only">${formatDate(c.created_at)}</td>` : ''}
+          ${isAdmin ? `<td class="admin-only">${formatDate(c.updated_at)}</td>` : ''}
+          <td>
+            <div style="display:flex;gap:8px;">
+              <a href="client-detail.html?id=${c.id}" class="btn btn-ghost" style="padding:6px 12px;font-size:0.8rem;">👁 View</a>
+              ${canEdit ? `<a href="edit-client.html?id=${c.id}" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">✏️ Edit</a>` : ''}
+              ${canEdit ? `<button onclick="openDeleteModal('${c.id}','${c.full_name}')" class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;">🗑️</button>` : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Search & Filter
+    function filterClients() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+      const trip = document.getElementById('tripFilter').value;
+
+      const filtered = allClients.filter(c => {
+        const matchSearch = !search ||
+          (c.full_name || '').toLowerCase().includes(search) ||
+          (c.passport_number || '').toLowerCase().includes(search) ||
+          (c.nationality || '').toLowerCase().includes(search);
+        const matchStatus = !status || c.status === status;
+        const matchTrip = !trip || c.trip_type === trip;
+        return matchSearch && matchStatus && matchTrip;
+      });
+
+      renderClients(filtered);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', filterClients);
+    document.getElementById('statusFilter').addEventListener('change', filterClients);
+    document.getElementById('tripFilter').addEventListener('change', filterClients);
+
+    // Delete
+    function openDeleteModal(id, name) {
+      deleteId = id;
+      document.getElementById('deleteClientName').textContent = name;
+      document.getElementById('deleteModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('deleteModal').classList.remove('show');
+      deleteId = null;
+    }
+
+    async function confirmDelete() {
+      if (!deleteId) return;
+      const { error } = await supabaseClient.from('clients').delete().eq('id', deleteId);
+      if (error) {
+        showToast('Error deleting client.', 'error');
+      } else {
+        await logActivity('DELETE_CLIENT', `Deleted client ID: ${deleteId}`);
+        showToast('Client deleted.', 'success');
+        closeModal();
+        loadClients();
+      }
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast toast-${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function roleLabel(r) {
+      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
+    }
+
+    function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }
+    function formatDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
+  </script>
+</body>
+</html>

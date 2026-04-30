@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A-M Travel CRM — Backup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/crm.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">A-M <span>Travel</span></div>
+    <div class="sidebar-role" id="sidebarRole">Loading...</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+      <a href="clients.html" class="nav-item">👥 Clients</a>
+      <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="backup.html" class="nav-item active admin-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
+    </nav>
+    <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Backup & Export</h1>
+        <p class="page-sub">Download your client data anytime</p>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-num" id="totalCount">—</div>
+        <div class="stat-label">Total Clients</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🕐</div>
+        <div class="stat-num" id="lastBackup">—</div>
+        <div class="stat-label">Last Export</div>
+      </div>
+    </div>
+
+    <!-- EXPORT OPTIONS -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">📤 Export Data</h2>
+      </div>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:24px;">
+        Export all client records. Choose your preferred format below.
+      </p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <button class="btn btn-success" onclick="exportCSV()">
+          📊 Export as CSV
+        </button>
+        <button class="btn btn-primary" onclick="exportExcel()">
+          📗 Export as Excel
+        </button>
+        <button class="btn btn-ghost" onclick="exportPDF()">
+          📄 Export as PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTER EXPORT -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">🔍 Filtered Export</h2>
+      </div>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:20px;">
+        Export only specific records based on status or trip type.
+      </p>
+      <div class="search-bar">
+        <select id="exportStatus">
+          <option value="">All Statuses</option>
+          <option value="New">New</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <select id="exportTrip">
+          <option value="">All Trip Types</option>
+          <option>🏖️ Vacation</option>
+          <option>💼 Business Trip</option>
+          <option>🚨 Emergency Travel</option>
+          <option>✈️ OFW / Balikbayan</option>
+          <option>🌍 Other</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;">
+        <button class="btn btn-success" onclick="exportFiltered('csv')">📊 Filtered CSV</button>
+        <button class="btn btn-primary" onclick="exportFiltered('excel')">📗 Filtered Excel</button>
+        <button class="btn btn-ghost" onclick="exportFiltered('pdf')">📄 Filtered PDF</button>
+      </div>
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div class="card superadmin-only" style="display:none">
+      <div class="card-header">
+        <h2 class="card-title">📋 Activity Log</h2>
+        <button class="btn btn-ghost" style="padding:6px 14px;font-size:0.8rem;" onclick="exportActivityLog()">Export Log</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Details</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="activityTable">
+            <tr><td colspan="3" class="empty-row">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let allClients = [];
+    let currentRole = '';
+
+    window.addEventListener('load', async () => {
+      const user = await requireAuth();
+      const profile = await getProfile(user.id);
+      currentRole = profile.role;
+
+      if (currentRole !== 'admin' && currentRole !== 'superadmin') {
+        alert('Access denied.');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+      if (currentRole === 'superadmin') {
+        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
+        loadActivityLog();
+      }
+
+      loadData();
+    });
+
+    async function loadData() {
+      const { data } = await supabaseClient.from('clients').select('*').order('created_at', { ascending: false });
+      allClients = data || [];
+      document.getElementById('totalCount').textContent = allClients.length;
+      const lastExport = localStorage.getItem('lastExport');
+      document.getElementById('lastBackup').textContent = lastExport ? new Date(lastExport).toLocaleDateString() : 'Never';
+    }
+
+    async function loadActivityLog() {
+      const { data } = await supabaseClient
+        .from('activity_log').select('*').order('created_at', { ascending: false }).limit(50);
+      const tbody = document.getElementById('activityTable');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty-row">No activity yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(a => `
+        <tr>
+          <td>${a.action || '—'}</td>
+          <td>${a.details || '—'}</td>
+          <td>${formatDate(a.created_at)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function getExportData(clients) {
+      return clients.map(c => ({
+        'Full Name': c.full_name || '',
+        'Passport Number': c.passport_number || '',
+        'Contact': c.contact || '',
+        'Nationality': c.nationality || '',
+        'Trip Type': c.trip_type || '',
+        'Status': c.status || '',
+        'Notes': c.notes || '',
+        'Created At': formatDate(c.created_at),
+        'Updated At': formatDate(c.updated_at)
+      }));
+    }
+
+    function exportCSV(clients = allClients) {
+      const rows = getExportData(clients);
+      const headers = Object.keys(rows[0]);
+      const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${r[h]}"`).join(','))].join('\n');
+      download(`AM_Travel_Clients_${dateStamp()}.csv`, csv, 'text/csv');
+      markExport();
+      showToast('CSV exported!', 'success');
+    }
+
+    function exportExcel(clients = allClients) {
+      const rows = getExportData(clients);
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Clients');
+      XLSX.writeFile(wb, `AM_Travel_Clients_${dateStamp()}.xlsx`);
+      markExport();
+      showToast('Excel exported!', 'success');
+    }
+
+    function exportPDF(clients = allClients) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape' });
+      doc.setFontSize(14);
+      doc.text('A-M Travel and Tours — Client Records', 14, 15);
+      doc.setFontSize(9);
+      doc.text(`Exported: ${new Date().toLocaleString()}`, 14, 22);
+
+      const rows = getExportData(clients);
+      doc.autoTable({
+        startY: 28,
+        head: [Object.keys(rows[0])],
+        body: rows.map(r => Object.values(r)),
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [37, 99, 235] }
+      });
+
+      doc.save(`AM_Travel_Clients_${dateStamp()}.pdf`);
+      markExport();
+      showToast('PDF exported!', 'success');
+    }
+
+    async function exportFiltered(format) {
+      const status = document.getElementById('exportStatus').value;
+      const trip = document.getElementById('exportTrip').value;
+      let filtered = allClients;
+      if (status) filtered = filtered.filter(c => c.status === status);
+      if (trip) filtered = filtered.filter(c => c.trip_type === trip);
+
+      if (filtered.length === 0) { showToast('No records match your filter.', 'error'); return; }
+
+      if (format === 'csv') exportCSV(filtered);
+      else if (format === 'excel') exportExcel(filtered);
+      else exportPDF(filtered);
+    }
+
+    async function exportActivityLog() {
+      const { data } = await supabaseClient.from('activity_log').select('*').order('created_at', { ascending: false });
+      if (!data || data.length === 0) { showToast('No activity log data.', 'error'); return; }
+      const rows = data.map(a => ({ Action: a.action, Details: a.details, Timestamp: formatDate(a.created_at) }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Activity Log');
+      XLSX.writeFile(wb, `AM_Travel_ActivityLog_${dateStamp()}.xlsx`);
+      showToast('Activity log exported!', 'success');
+    }
+
+    function download(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    }
+
+    function markExport() {
+      localStorage.setItem('lastExport', new Date().toISOString());
+      document.getElementById('lastBackup').textContent = new Date().toLocaleDateString();
+    }
+
+    function dateStamp() { return new Date().toISOString().split('T')[0]; }
+    function formatDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
+    function roleLabel(r) {
+      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
+    }
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast toast-${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>

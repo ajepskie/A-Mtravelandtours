@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A-M Travel CRM — Manage Users</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/crm.css"/>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">A-M <span>Travel</span></div>
+    <div class="sidebar-role" id="sidebarRole">Loading...</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+      <a href="clients.html" class="nav-item">👥 Clients</a>
+      <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="backup.html" class="nav-item">💾 Backup</a>
+      <a href="users.html" class="nav-item active">⚙️ Manage Users</a>
+    </nav>
+    <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Manage Users</h1>
+        <p class="page-sub">Create accounts and assign roles</p>
+      </div>
+    </div>
+
+    <!-- CREATE USER -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">➕ Create New User</h2>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="newName" placeholder="e.g. Maria Santos"/>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="newEmail" placeholder="e.g. maria@amtravel.com"/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="newPassword" placeholder="Min. 8 characters"/>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="newRole">
+            <option value="worker">👷 Worker</option>
+            <option value="admin">🔧 Admin</option>
+            <option value="tester">🧪 Tester</option>
+            <option value="superadmin">👑 Super Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="createBtn" onclick="createUser()">👤 Create User</button>
+      </div>
+    </div>
+
+    <!-- USERS LIST -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">👥 All Users</h2>
+        <button class="btn btn-ghost" style="padding:6px 14px;font-size:0.8rem;" onclick="loadUsers()">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Full Name</th>
+              <th>Role</th>
+              <th>Created At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable">
+            <tr><td colspan="4" class="empty-row">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- EDIT ROLE MODAL -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h3>✏️ Change Role</h3>
+      <p>Update the role for <strong id="editUserName"></strong></p>
+      <div class="form-group" style="margin-bottom:24px;">
+        <label>New Role</label>
+        <select id="editRole">
+          <option value="worker">👷 Worker</option>
+          <option value="admin">🔧 Admin</option>
+          <option value="tester">🧪 Tester</option>
+          <option value="superadmin">👑 Super Admin</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="confirmRoleChange()">Save Role</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let editUserId = null;
+    let currentUserId = null;
+
+    window.addEventListener('load', async () => {
+      const user = await requireAuth();
+      currentUserId = user.id;
+      const profile = await getProfile(user.id);
+
+      if (profile.role !== 'superadmin') {
+        alert('Access denied. Super Admin only.');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      document.getElementById('sidebarRole').textContent = '👑 Super Admin';
+      loadUsers();
+    });
+
+    async function loadUsers() {
+      const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const tbody = document.getElementById('usersTable');
+
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">No users found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(u => `
+        <tr>
+          <td>${u.full_name || '—'}</td>
+          <td><span class="role-pill role-${u.role}">${roleLabel(u.role)}</span></td>
+          <td>${formatDate(u.created_at)}</td>
+          <td>
+            <div style="display:flex;gap:8px;">
+              ${u.id !== currentUserId ? `
+                <button onclick="openEditModal('${u.id}','${u.full_name}','${u.role}')" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">✏️ Role</button>
+              ` : '<span style="color:var(--muted);font-size:0.8rem;">You</span>'}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function createUser() {
+      const name = document.getElementById('newName').value.trim();
+      const email = document.getElementById('newEmail').value.trim();
+      const password = document.getElementById('newPassword').value;
+      const role = document.getElementById('newRole').value;
+
+      if (!name || !email || !password) {
+        showToast('Please fill in all fields.', 'error');
+        return;
+      }
+
+      if (password.length < 8) {
+        showToast('Password must be at least 8 characters.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('createBtn');
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+
+      // Sign up user via Supabase Auth
+      const { data, error } = await supabaseClient.auth.admin
+        ? await supabaseClient.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { full_name: name }
+          })
+        : { data: null, error: { message: 'Admin API not available on client side.' } };
+
+      if (error) {
+        // Fallback: insert directly into profiles after manual signup
+        showToast('Note: User must self-register, then you can assign their role below.', 'error');
+        btn.disabled = false;
+        btn.textContent = '👤 Create User';
+        return;
+      }
+
+      // Insert profile
+      if (data?.user) {
+        await supabaseClient.from('profiles').insert([{
+          id: data.user.id,
+          full_name: name,
+          role
+        }]);
+
+        await logActivity('CREATE_USER', `Created user: ${name} (${role})`);
+        showToast(`User ${name} created as ${roleLabel(role)}!`, 'success');
+
+        // Clear form
+        document.getElementById('newName').value = '';
+        document.getElementById('newEmail').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('newRole').value = 'worker';
+        loadUsers();
+      }
+
+      btn.disabled = false;
+      btn.textContent = '👤 Create User';
+    }
+
+    function openEditModal(id, name, role) {
+      editUserId = id;
+      document.getElementById('editUserName').textContent = name;
+      document.getElementById('editRole').value = role;
+      document.getElementById('editModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('show');
+      editUserId = null;
+    }
+
+    async function confirmRoleChange() {
+      if (!editUserId) return;
+      const newRole = document.getElementById('editRole').value;
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', editUserId);
+
+      if (error) {
+        showToast('Error updating role.', 'error');
+        return;
+      }
+
+      await logActivity('UPDATE_ROLE', `Changed role to ${newRole} for user ID: ${editUserId}`);
+      showToast('Role updated successfully!', 'success');
+      closeModal();
+      loadUsers();
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast toast-${type} show`;
+      setTimeout(() => t.classList.remove('show'), 4000);
+    }
+
+    function roleLabel(r) {
+      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
+    }
+
+    function formatDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
+  </script>
+</body>
+</html>

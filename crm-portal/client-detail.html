@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A-M Travel CRM — Client Detail</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/crm.css"/>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">A-M <span>Travel</span></div>
+    <div class="sidebar-role" id="sidebarRole">Loading...</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+      <a href="clients.html" class="nav-item">👥 Clients</a>
+      <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
+    </nav>
+    <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
+  </aside>
+
+  <main class="main-content">
+    <a href="clients.html" class="back-btn">← Back to Clients</a>
+    <div class="topbar">
+      <div>
+        <h1 class="page-title" id="clientName">Loading...</h1>
+        <p class="page-sub">Client Record</p>
+      </div>
+      <div class="btn-row" id="actionBtns" style="margin-top:0"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Personal Details</h2>
+        <span class="status-badge" id="statusBadge">—</span>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-field">
+          <label>Full Name</label>
+          <div class="detail-value" id="d_fullname">—</div>
+        </div>
+        <div class="detail-field">
+          <label>Passport Number</label>
+          <div class="detail-value" id="d_passport">—</div>
+        </div>
+        <div class="detail-field">
+          <label>Contact Number</label>
+          <div class="detail-value" id="d_contact">—</div>
+        </div>
+        <div class="detail-field">
+          <label>Nationality</label>
+          <div class="detail-value" id="d_nationality">—</div>
+        </div>
+        <div class="detail-field">
+          <label>Trip Type</label>
+          <div class="detail-value" id="d_triptype">—</div>
+        </div>
+        <div class="detail-field">
+          <label>Status</label>
+          <div class="detail-value" id="d_status">—</div>
+        </div>
+      </div>
+      <div class="detail-field" style="margin-top:8px;">
+        <label>Notes</label>
+        <div class="detail-value" id="d_notes" style="border:none;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;min-height:60px;">—</div>
+      </div>
+    </div>
+
+    <!-- DOCUMENT -->
+    <div class="card" id="docCard" style="display:none">
+      <div class="card-header">
+        <h2 class="card-title">📎 Uploaded Document</h2>
+      </div>
+      <a id="docLink" href="#" target="_blank" class="btn btn-ghost">📄 View Document</a>
+    </div>
+
+    <!-- TIMESTAMPS — Admin & Super Admin only -->
+    <div class="card admin-only" id="tsCard" style="display:none">
+      <div class="card-header">
+        <h2 class="card-title">🕐 Timestamps</h2>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-field">
+          <label>Created At</label>
+          <div class="detail-value" id="d_created">—</div>
+        </div>
+        <div class="detail-field">
+          <label>Last Updated At</label>
+          <div class="detail-value" id="d_updated">—</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    window.addEventListener('load', async () => {
+      const user = await requireAuth();
+      const profile = await getProfile(user.id);
+      const role = profile.role;
+
+      document.getElementById('sidebarRole').textContent = roleLabel(role);
+
+      if (role === 'admin' || role === 'superadmin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+      }
+      if (role === 'superadmin') {
+        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const clientId = params.get('id');
+      if (!clientId) { window.location.href = 'clients.html'; return; }
+
+      const { data, error } = await supabaseClient
+        .from('clients').select('*').eq('id', clientId).single();
+
+      if (error || !data) { window.location.href = 'clients.html'; return; }
+
+      // Populate
+      document.getElementById('clientName').textContent = data.full_name;
+      document.getElementById('d_fullname').textContent = data.full_name || '—';
+      document.getElementById('d_passport').textContent = data.passport_number || '—';
+      document.getElementById('d_contact').textContent = data.contact || '—';
+      document.getElementById('d_nationality').textContent = data.nationality || '—';
+      document.getElementById('d_triptype').textContent = data.trip_type || '—';
+      document.getElementById('d_status').textContent = data.status || '—';
+      document.getElementById('d_notes').textContent = data.notes || 'No notes.';
+
+      const badge = document.getElementById('statusBadge');
+      badge.textContent = data.status || '—';
+      badge.className = `status-badge status-${slugify(data.status)}`;
+
+      // Document
+      if (data.document_url) {
+        document.getElementById('docCard').style.display = '';
+        document.getElementById('docLink').href = data.document_url;
+      }
+
+      // Timestamps — admin only
+      if (role === 'admin' || role === 'superadmin') {
+        document.getElementById('tsCard').style.display = '';
+        document.getElementById('d_created').textContent = formatDate(data.created_at);
+        document.getElementById('d_updated').textContent = formatDate(data.updated_at);
+      }
+
+      // Action buttons — admin & superadmin only
+      if (role === 'admin' || role === 'superadmin') {
+        document.getElementById('actionBtns').innerHTML = `
+          <a href="edit-client.html?id=${data.id}" class="btn btn-primary">✏️ Edit</a>
+        `;
+      }
+    });
+
+    function roleLabel(r) {
+      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
+    }
+
+    function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }
+    function formatDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
+  </script>
+</body>
+</html>
