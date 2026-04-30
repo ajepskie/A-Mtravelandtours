@@ -138,7 +138,7 @@
         const fileName = `${Date.now()}_${file.name}`;
         const { data: uploadData, error: uploadError } = await supabaseClient
           .storage
-          .from('client-documents')
+          .from('Client Document)
           .upload(fileName, file);
 
         if (uploadError) {

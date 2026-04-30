@@ -172,11 +172,11 @@
         const file = fileInput.files[0];
         const fileName = `${Date.now()}_${file.name}`;
         const { error: uploadError } = await supabaseClient
-          .storage.from('client-documents').upload(fileName, file);
+          .storage.from('Client Document').upload(fileName, file);
 
         if (!uploadError) {
           const { data: urlData } = supabaseClient.storage
-            .from('client-documents').getPublicUrl(fileName);
+            .from('Client Document').getPublicUrl(fileName);
           document_url = urlData.publicUrl;
         }
       }
