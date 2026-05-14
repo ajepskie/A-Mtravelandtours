@@ -1,18 +1,19 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #060910;
-  --surface: #0d1117;
-  --surface2: #111827;
-  --border: rgba(255,255,255,0.07);
-  --accent: #2563eb;
-  --accent-glow: rgba(37,99,235,0.2);
-  --gold: #f59e0b;
-  --text: #f1f5f9;
-  --muted: #64748b;
+  --bg: #1a1a1a;
+  --surface: #252525;
+  --surface2: #2d2d2d;
+  --border: rgba(244, 244, 244, 0.08);
+  --accent: #023E8A;
+  --accent-secondary: #0096C7;
+  --accent-glow: rgba(2, 62, 138, 0.2);
+  --gold: #0096C7;
+  --text: #f4f4f4;
+  --muted: #a0a0a0;
   --error: #ef4444;
   --success: #22c55e;
-  --warning: #f59e0b;
+  --warning: #0096C7;
   --sidebar-w: 240px;
 }
 
@@ -43,6 +44,9 @@ body {
   font-weight: 800;
   padding: 0 12px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .sidebar-logo span { color: var(--accent); }

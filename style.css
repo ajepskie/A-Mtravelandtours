@@ -66,6 +66,32 @@ nav {
   color: var(--orange);
 }
 
+.nav-logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: opacity 0.2s;
+}
+
+.nav-logo-container:hover {
+  opacity: 0.9;
+}
+
+.nav-logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-tagline {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--orange);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .nav-links {
   display: flex;
   gap: 32px;
