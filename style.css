@@ -1,7 +1,7 @@
 /* ================================================================
-   WANDERPH - MAIN STYLESHEET
+   AM TRAVEL & TOURS - MAIN STYLESHEET
    ================================================================
-   This file contains all the visual styling for WanderPH website.
+   This file contains all the visual styling for AM Travel & Tours website.
    Edit colors, sizes, and layouts here.
    ================================================================ */
 
@@ -14,14 +14,19 @@
 
 /* ── COLOR VARIABLES - Edit these to change the entire website colors ── */
 :root {
-  --orange: #FF6B2B;           /* Primary brand color */
-  --orange-dark: #e85a1a;      /* Darker orange for hover */
-  --sky: #0ea5e9;              /* Accent color */
-  --dark: #0f172a;             /* Dark background */
-  --mid: #1e293b;              /* Medium background */
-  --light: #f8fafc;            /* Light background */
-  --muted: #94a3b8;            /* Gray text */
-  --white: #ffffff;            /* White text */
+  --primary: #023E8A;          /* Primary brand color - Navy Blue */
+  --primary-dark: #022060;     /* Darker primary for hover */
+  --secondary: #0096C7;        /* Secondary brand color - Cyan Blue */
+  --accent: #03045E;           /* Accent color - Deep Navy */
+  --dark: #1a1a1a;             /* Dark background */
+  --mid: #252525;              /* Medium background */
+  --light: #f4f4f4;            /* Light text/background */
+  --muted: #a0a0a0;            /* Gray text */
+  --white: #f4f4f4;            /* White text */
+  /* Legacy names for compatibility */
+  --orange: #0096C7;
+  --orange-dark: #023E8A;
+  --sky: #0096C7;
 }
 
 html {
@@ -87,7 +92,7 @@ nav {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.65rem;
   font-weight: 500;
-  color: var(--orange);
+  color: var(--secondary);
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
