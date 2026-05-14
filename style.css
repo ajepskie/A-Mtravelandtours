@@ -68,7 +68,14 @@ nav {
 }
 
 .nav-logo span {
-  color: var(--orange);
+  color: var(--secondary);
+}
+
+.nav-logo-img {
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .nav-logo-container {
@@ -116,7 +123,7 @@ nav {
 }
 
 .nav-cta {
-  background: var(--orange);
+  background: var(--secondary);
   color: var(--white);
   border: none;
   padding: 10px 22px;
@@ -129,7 +136,7 @@ nav {
 }
 
 .nav-cta:hover {
-  background: var(--orange-dark);
+  background: var(--primary);
   transform: translateY(-1px);
 }
 
@@ -173,9 +180,9 @@ nav {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 107, 43, 0.15);
-  border: 1px solid rgba(255, 107, 43, 0.3);
-  color: var(--orange);
+  background: rgba(2, 62, 138, 0.15);
+  border: 1px solid rgba(2, 62, 138, 0.3);
+  color: var(--primary);
   font-size: 0.8rem;
   font-weight: 500;
   padding: 6px 14px;
@@ -199,7 +206,7 @@ nav {
 }
 
 .hero h1 span {
-  color: var(--orange);
+  color: var(--secondary);
 }
 
 .hero p {
@@ -232,7 +239,7 @@ nav {
 }
 
 .lead-form h3 span {
-  color: var(--orange);
+  color: var(--secondary);
 }
 
 .form-row {
@@ -260,8 +267,8 @@ nav {
 }
 
 .form-input:focus {
-  border-color: var(--orange);
-  background: rgba(255, 107, 43, 0.05);
+  border-color: var(--secondary);
+  background: rgba(9, 150, 199, 0.05);
 }
 
 .form-select {
@@ -289,7 +296,7 @@ nav {
 }
 
 .form-select:focus {
-  border-color: var(--orange);
+  border-color: var(--secondary);
 }
 
 .whatsapp-btn {
@@ -354,7 +361,7 @@ nav {
   font-family: 'Playfair Display', serif;
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--orange);
+  color: var(--secondary);
 }
 
 .trust-label {
@@ -372,7 +379,7 @@ nav {
 .section-label {
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--orange);
+  color: var(--secondary);
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-bottom: 12px;
@@ -554,14 +561,15 @@ footer {
   gap: 16px;
 }
 
-.footer-logo {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.3rem;
-  font-weight: 900;
+.footer-logo-img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 12px;
 }
 
 .footer-logo span {
-  color: var(--orange);
+  color: var(--secondary);
 }
 
 footer p {
