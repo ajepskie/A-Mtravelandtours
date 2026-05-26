@@ -445,7 +445,19 @@ nav {
    DESTINATIONS - Travel destination cards
    ================================================================ */
 .destinations {
-  background: var(--mid);
+  background: white;
+}
+
+.destinations .section-label {
+  color: var(--orange);
+}
+
+.destinations .section-title {
+  color: black;
+}
+
+.destinations .section-sub {
+  color: #333;
 }
 
 .dest-grid {
