@@ -39,10 +39,8 @@
         <input type="text" id="searchInput" placeholder="🔍 Search by name, passport, nationality..."/>
         <select id="statusFilter">
           <option value="">All Statuses</option>
-          <option>New</option>
-          <option>In Progress</option>
-          <option>Completed</option>
-          <option>Cancelled</option>
+          <option>✅ Converted</option>
+          <option>❌ Loss</option>
         </select>
         <select id="tripFilter">
           <option value="">All Trip Types</option>
@@ -51,6 +49,19 @@
           <option>🚨 Emergency Travel</option>
           <option>✈️ OFW / Balikbayan</option>
           <option>🌍 Other</option>
+        </select>
+        <select id="sourceFilter">
+          <option value="">All Sources</option>
+          <option>📘 Facebook</option>
+          <option>📷 Instagram</option>
+          <option>🔍 Google</option>
+          <option>💬 WhatsApp</option>
+          <option>🐦 Twitter/X</option>
+          <option>🔗 LinkedIn</option>
+          <option>👥 Referral</option>
+          <option>🌐 Other Social Media</option>
+          <option>📞 Direct Call</option>
+          <option>🤝 Walk-in</option>
         </select>
       </div>
 
@@ -63,6 +74,8 @@
               <th>Contact</th>
               <th>Nationality</th>
               <th>Trip Type</th>
+              <th>Registered Date</th>
+              <th>Source</th>
               <th>Status</th>
               <th class="admin-only" style="display:none">Created At</th>
               <th class="admin-only" style="display:none">Updated At</th>
@@ -70,7 +83,7 @@
             </tr>
           </thead>
           <tbody id="clientsTable">
-            <tr><td colspan="9" class="empty-row">Loading...</td></tr>
+            <tr><td colspan="11" class="empty-row">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -132,7 +145,7 @@
       const canEdit = currentRole === 'admin' || currentRole === 'superadmin';
 
       if (clients.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-row">No clients found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="empty-row">No clients found.</td></tr>';
         return;
       }
 
@@ -143,6 +156,8 @@
           <td>${c.contact || '—'}</td>
           <td>${c.nationality || '—'}</td>
           <td>${c.trip_type || '—'}</td>
+          <td>${formatDate(c.registered_date)}</td>
+          <td>${c.source_of_lead || '—'}</td>
           <td><span class="status-badge status-${slugify(c.status)}">${c.status || '—'}</span></td>
           ${isAdmin ? `<td class="admin-only">${formatDate(c.created_at)}</td>` : ''}
           ${isAdmin ? `<td class="admin-only">${formatDate(c.updated_at)}</td>` : ''}
@@ -162,6 +177,7 @@
       const search = document.getElementById('searchInput').value.toLowerCase();
       const status = document.getElementById('statusFilter').value;
       const trip = document.getElementById('tripFilter').value;
+      const source = document.getElementById('sourceFilter').value;
 
       const filtered = allClients.filter(c => {
         const matchSearch = !search ||
@@ -170,7 +186,8 @@
           (c.nationality || '').toLowerCase().includes(search);
         const matchStatus = !status || c.status === status;
         const matchTrip = !trip || c.trip_type === trip;
-        return matchSearch && matchStatus && matchTrip;
+        const matchSource = !source || c.source_of_lead === source;
+        return matchSearch && matchStatus && matchTrip && matchSource;
       });
 
       renderClients(filtered);
@@ -179,6 +196,7 @@
     document.getElementById('searchInput').addEventListener('input', filterClients);
     document.getElementById('statusFilter').addEventListener('change', filterClients);
     document.getElementById('tripFilter').addEventListener('change', filterClients);
+    document.getElementById('sourceFilter').addEventListener('change', filterClients);
 
     // Delete
     function openDeleteModal(id, name) {

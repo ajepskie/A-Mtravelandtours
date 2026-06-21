@@ -64,12 +64,30 @@
           </select>
         </div>
         <div class="form-group">
+          <label>Registered Date</label>
+          <input type="date" id="registered_date"/>
+        </div>
+        <div class="form-group">
+          <label>Source of Lead</label>
+          <select id="source_of_lead">
+            <option value="">Select source</option>
+            <option>📘 Facebook</option>
+            <option>📷 Instagram</option>
+            <option>🔍 Google</option>
+            <option>💬 WhatsApp</option>
+            <option>🐦 Twitter/X</option>
+            <option>🔗 LinkedIn</option>
+            <option>👥 Referral</option>
+            <option>🌐 Other Social Media</option>
+            <option>📞 Direct Call</option>
+            <option>🤝 Walk-in</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>Status</label>
           <select id="status">
-            <option value="New">New</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
+            <option value="Converted">✅ Converted</option>
+            <option value="Loss">❌ Loss</option>
           </select>
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
@@ -146,7 +164,9 @@
       document.getElementById('contact').value = data.contact || '';
       document.getElementById('nationality').value = data.nationality || '';
       document.getElementById('trip_type').value = data.trip_type || '';
-      document.getElementById('status').value = data.status || 'New';
+      document.getElementById('registered_date').value = data.registered_date ? data.registered_date.split('T')[0] : '';
+      document.getElementById('source_of_lead').value = data.source_of_lead || '';
+      document.getElementById('status').value = data.status || 'Converted';
       document.getElementById('notes').value = data.notes || '';
 
       existingDocUrl = data.document_url;
@@ -191,7 +211,9 @@
         contact: document.getElementById('contact').value.trim() || null,
         nationality: document.getElementById('nationality').value.trim() || null,
         trip_type: document.getElementById('trip_type').value || null,
-        status: document.getElementById('status').value || 'New',
+        registered_date: document.getElementById('registered_date').value || null,
+        source_of_lead: document.getElementById('source_of_lead').value || null,
+        status: document.getElementById('status').value || 'Converted',
         notes: document.getElementById('notes').value.trim() || null,
         document_url,
         updated_by: currentUser.id,
