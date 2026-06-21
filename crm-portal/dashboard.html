@@ -51,14 +51,14 @@
         <div class="stat-label">New</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">⏳</div>
-        <div class="stat-num" id="inProgressClients">—</div>
-        <div class="stat-label">In Progress</div>
+        <div class="stat-icon">🔄</div>
+        <div class="stat-num" id="referredClients">—</div>
+        <div class="stat-label">Referred</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">✅</div>
-        <div class="stat-num" id="completedClients">—</div>
-        <div class="stat-label">Completed</div>
+        <div class="stat-num" id="convertedClients">—</div>
+        <div class="stat-label">Converted</div>
       </div>
     </div>
 
@@ -85,16 +85,77 @@
         </table>
       </div>
     </div>
+
+    <!-- EMPLOYEES (SuperAdmin Only) -->
+    <div class="card superadmin-only" id="employeesCard" style="display:none">
+      <div class="card-header">
+        <h2 class="card-title">👥 Team Members</h2>
+        <a href="users.html" class="btn-link">Manage All →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="employeesTable">
+            <tr><td colspan="5" class="empty-row">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <!-- EDIT USER ROLE MODAL -->
+  <div class="modal-overlay" id="editUserModal">
+    <div class="modal">
+      <h3>✏️ Change Role</h3>
+      <p>Update role for <strong id="editUserNameText"></strong></p>
+      <div class="form-group" style="margin-bottom:24px;">
+        <label>New Role</label>
+        <select id="editUserRole">
+          <option value="worker">👷 Worker</option>
+          <option value="admin">🔧 Admin</option>
+          <option value="tester">🧪 Tester</option>
+          <option value="superadmin">👑 Super Admin</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="confirmUserRoleChange()">Save Role</button>
+        <button class="btn btn-ghost" onclick="closeUserModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE USER MODAL -->
+  <div class="modal-overlay" id="deleteUserModal">
+    <div class="modal">
+      <h3>🗑️ Delete Employee</h3>
+      <p>Are you sure you want to remove <strong id="deleteUserNameText"></strong> from the system? This action cannot be undone.</p>
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="confirmDeleteUser()">Yes, Delete</button>
+        <button class="btn btn-ghost" onclick="closeDeleteUserModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 <script src="js/config.js" defer></script>
   <script src="js/auth.js"></script>
   <script>
     let currentRole = '';
+    let currentUserId = '';
+    let editingUserId = null;
+    let deletingUserId = null;
 
     window.addEventListener('load', async () => {
       const user = await requireAuth();
+      currentUserId = user.id;
       const profile = await getProfile(user.id);
       currentRole = profile.role;
 
@@ -110,6 +171,8 @@
       }
       if (currentRole === 'superadmin') {
         document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
+        document.getElementById('employeesCard').style.display = '';
+        loadEmployees();
       }
 
       loadStats();
@@ -121,8 +184,8 @@
       if (!data) return;
       document.getElementById('totalClients').textContent = data.length;
       document.getElementById('newClients').textContent = data.filter(c => c.status === 'New').length;
-      document.getElementById('inProgressClients').textContent = data.filter(c => c.status === 'In Progress').length;
-      document.getElementById('completedClients').textContent = data.filter(c => c.status === 'Completed').length;
+      document.getElementById('referredClients').textContent = data.filter(c => c.status === 'Referred client').length;
+      document.getElementById('convertedClients').textContent = data.filter(c => c.status === 'Converted').length;
     }
 
     async function loadRecentClients() {
@@ -150,7 +213,106 @@
       `).join('');
     }
 
-    function roleLabel(r) {
+    async function loadEmployees() {
+      const { data } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const tbody = document.getElementById('employeesTable');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No employees yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(u => `
+        <tr>
+          <td>${u.full_name || '—'}</td>
+          <td>${u.email || '—'}</td>
+          <td><span class="role-pill role-${u.role}">${roleLabel(u.role)}</span></td>
+          <td>${formatDate(u.created_at)}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              ${u.id !== currentUserId ? `
+                <button onclick="openEditUserModal('${u.id}','${u.full_name}','${u.role}')" class="btn btn-primary" style="padding:4px 10px;font-size:0.75rem;">✏️</button>
+                <button onclick="openDeleteUserModal('${u.id}','${u.full_name}')" class="btn btn-danger" style="padding:4px 10px;font-size:0.75rem;">🗑️</button>
+              ` : '<span style="color:var(--muted);font-size:0.75rem;">(You)</span>'}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openEditUserModal(id, name, role) {
+      editingUserId = id;
+      document.getElementById('editUserNameText').textContent = name;
+      document.getElementById('editUserRole').value = role;
+      document.getElementById('editUserModal').classList.add('show');
+    }
+
+    function closeUserModal() {
+      document.getElementById('editUserModal').classList.remove('show');
+      editingUserId = null;
+    }
+
+    async function confirmUserRoleChange() {
+      if (!editingUserId) return;
+      const newRole = document.getElementById('editUserRole').value;
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', editingUserId);
+
+      if (error) {
+        showToast('Error updating role.', 'error');
+        return;
+      }
+
+      await logActivity('UPDATE_ROLE', `Changed role to ${newRole} for user ID: ${editingUserId}`);
+      showToast('Role updated successfully!', 'success');
+      closeUserModal();
+      loadEmployees();
+    }
+
+    function openDeleteUserModal(id, name) {
+      deletingUserId = id;
+      document.getElementById('deleteUserNameText').textContent = name;
+      document.getElementById('deleteUserModal').classList.add('show');
+    }
+
+    function closeDeleteUserModal() {
+      document.getElementById('deleteUserModal').classList.remove('show');
+      deletingUserId = null;
+    }
+
+    async function confirmDeleteUser() {
+      if (!deletingUserId) return;
+
+      // Delete from profiles
+      const { error: profileError } = await supabaseClient
+        .from('profiles')
+        .delete()
+        .eq('id', deletingUserId);
+
+      if (profileError) {
+        showToast('Error deleting user.', 'error');
+        return;
+      }
+
+      await logActivity('DELETE_USER', `Deleted user ID: ${deletingUserId}`);
+      showToast('Employee removed successfully!', 'success');
+      closeDeleteUserModal();
+      loadEmployees();
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast toast-${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
       return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
     }
 

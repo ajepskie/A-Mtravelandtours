@@ -19,8 +19,8 @@
       <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
       <a href="clients.html" class="nav-item">👥 Clients</a>
       <a href="add-client.html" class="nav-item">➕ Add Client</a>
-      <a href="backup.html" class="nav-item">💾 Backup</a>
-      <a href="users.html" class="nav-item active">⚙️ Manage Users</a>
+      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only active">⚙️ Manage Users</a>
     </nav>
     <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
   </aside>
@@ -111,6 +111,18 @@
     </div>
   </div>
 
+  <!-- DELETE USER MODAL -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <h3>🗑️ Delete Employee</h3>
+      <p>Are you sure you want to remove <strong id="deleteUserName"></strong> from the system? This action cannot be undone.</p>
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="confirmDelete()">Yes, Delete</button>
+        <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -119,6 +131,7 @@
   <script>
     let editUserId = null;
     let currentUserId = null;
+    let deleteUserId = null;
 
     window.addEventListener('load', async () => {
       const user = await requireAuth();
@@ -157,6 +170,7 @@
             <div style="display:flex;gap:8px;">
               ${u.id !== currentUserId ? `
                 <button onclick="openEditModal('${u.id}','${u.full_name}','${u.role}')" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">✏️ Role</button>
+                <button onclick="openDeleteModal('${u.id}','${u.full_name}')" class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;">🗑️ Delete</button>
               ` : '<span style="color:var(--muted);font-size:0.8rem;">You</span>'}
             </div>
           </td>
@@ -254,6 +268,37 @@
       await logActivity('UPDATE_ROLE', `Changed role to ${newRole} for user ID: ${editUserId}`);
       showToast('Role updated successfully!', 'success');
       closeModal();
+      loadUsers();
+    }
+
+    function openDeleteModal(id, name) {
+      deleteUserId = id;
+      document.getElementById('deleteUserName').textContent = name;
+      document.getElementById('deleteModal').classList.add('show');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('show');
+      deleteUserId = null;
+    }
+
+    async function confirmDelete() {
+      if (!deleteUserId) return;
+
+      // Delete from profiles
+      const { error: profileError } = await supabaseClient
+        .from('profiles')
+        .delete()
+        .eq('id', deleteUserId);
+
+      if (profileError) {
+        showToast('Error deleting user.', 'error');
+        return;
+      }
+
+      await logActivity('DELETE_USER', `Deleted user ID: ${deleteUserId}`);
+      showToast('Employee removed successfully!', 'success');
+      closeDeleteModal();
       loadUsers();
     }
 
