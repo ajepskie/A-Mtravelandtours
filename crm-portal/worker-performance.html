@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A-M Travel CRM — Worker Performance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/crm.css"/>
+  <link rel="stylesheet" href="../assets/logos.css"/>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo-container">
+      <img src="../assets/images/am-logomark.png" alt="A-M Travel Logo" class="logo-image">
+      <div class="sidebar-logo">A-M <span>Travel</span></div>
+    </div>
+    <div class="sidebar-role" id="sidebarRole">Loading...</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+      <a href="clients.html" class="nav-item">👥 Clients</a>
+      <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="worker-performance.html" class="nav-item active">📈 Workers</a>
+      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
+    </nav>
+    <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
+  </aside>
+
+  <main class="main-content">
+    <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Worker Performance</h1>
+        <p class="page-sub">Monitor your team's daily activity and sales performance</p>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="card">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Search by worker name..."/>
+        <input type="date" id="dateFilter" />
+      </div>
+    </div>
+
+    <!-- WORKERS TABLE -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">👷 Team Members Performance</h2>
+        <button class="btn btn-ghost" style="padding:6px 14px;font-size:0.8rem;" onclick="loadWorkers()">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>👥 Clients Created</th>
+              <th>✅ Converted</th>
+              <th>💬 Contacted Today</th>
+              <th>📈 Conversion Rate</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="workersTable">
+            <tr><td colspan="8" class="empty-row">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- WORKER DETAIL MODAL -->
+  <div class="modal-overlay" id="workerDetailModal">
+    <div class="modal" style="max-width:600px;max-height:80vh;overflow-y:auto;">
+      <h3>📊 <span id="workerName"></span> - Performance Details</h3>
+      <div style="margin-top:20px;">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <label>Total Clients Created</label>
+            <div class="detail-value" id="detail_totalClients">—</div>
+          </div>
+          <div class="detail-field">
+            <label>Clients Converted</label>
+            <div class="detail-value" id="detail_converted">—</div>
+          </div>
+          <div class="detail-field">
+            <label>Clients In Progress</label>
+            <div class="detail-value" id="detail_inProgress">—</div>
+          </div>
+          <div class="detail-field">
+            <label>Conversion Rate</label>
+            <div class="detail-value" id="detail_conversionRate">—</div>
+          </div>
+          <div class="detail-field">
+            <label>Contacted Today</label>
+            <div class="detail-value" id="detail_contactedToday">—</div>
+          </div>
+          <div class="detail-field">
+            <label>Last Activity</label>
+            <div class="detail-value" id="detail_lastActivity">—</div>
+          </div>
+        </div>
+
+        <!-- RECENT CLIENTS -->
+        <h4 style="margin-top:24px;margin-bottom:12px;color:var(--text);font-weight:600;">Recent Clients Created</h4>
+        <div style="overflow-x:auto;">
+          <table class="data-table" style="font-size:0.85rem;">
+            <thead>
+              <tr>
+                <th>Client Name</th>
+                <th>Status</th>
+                <th>Created Date</th>
+              </tr>
+            </thead>
+            <tbody id="workerClientsList">
+              <tr><td colspan="3" class="empty-row">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:20px;">
+        <button class="btn btn-ghost" onclick="closeWorkerModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="js/config.js" defer></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentRole = '';
+    let allWorkers = [];
+    let selectedWorkerId = null;
+
+    window.addEventListener('load', async () => {
+      const user = await requireAuth();
+      const profile = await getProfile(user.id);
+      currentRole = profile.role;
+
+      // Only admin & superadmin can access this
+      if (currentRole !== 'admin' && currentRole !== 'superadmin') {
+        alert('Access denied. Admin only.');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
+
+      if (currentRole === 'admin' || currentRole === 'superadmin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+      }
+      if (currentRole === 'superadmin') {
+        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
+      }
+
+      // Set today's date as default filter
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('dateFilter').value = today;
+
+      loadWorkers();
+    });
+
+    async function loadWorkers() {
+      // Get all workers
+      const { data: workers } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('role', 'worker')
+        .order('full_name', { ascending: true });
+
+      if (!workers || workers.length === 0) {
+        document.getElementById('workersTable').innerHTML = '<tr><td colspan="8" class="empty-row">No workers found.</td></tr>';
+        return;
+      }
+
+      allWorkers = workers;
+      renderWorkers(workers);
+    }
+
+    async function renderWorkers(workers) {
+      const tbody = document.getElementById('workersTable');
+      const todayDate = document.getElementById('dateFilter').value;
+
+      // Get all clients data
+      const { data: clientsData } = await supabaseClient
+        .from('clients')
+        .select('id, created_by, status, created_at');
+
+      if (!clientsData) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-row">Error loading data.</td></tr>';
+        return;
+      }
+
+      const rows = await Promise.all(workers.map(async worker => {
+        const workerClients = clientsData.filter(c => c.created_by === worker.id);
+        const converted = workerClients.filter(c => c.status === 'Converted').length;
+        const contactedToday = workerClients.filter(c => {
+          const createdDate = new Date(c.created_at).toISOString().split('T')[0];
+          return createdDate === todayDate;
+        }).length;
+
+        const conversionRate = workerClients.length > 0 
+          ? Math.round((converted / workerClients.length) * 100) 
+          : 0;
+
+        return `
+          <tr>
+            <td>${worker.full_name || '—'}</td>
+            <td>${worker.email || '—'}</td>
+            <td><span class="role-pill role-${worker.role}">${roleLabel(worker.role)}</span></td>
+            <td><strong>${workerClients.length}</strong></td>
+            <td><span style="color:#22c55e;">${converted}</span></td>
+            <td><strong>${contactedToday}</strong></td>
+            <td>${conversionRate}%</td>
+            <td>
+              <button onclick="openWorkerDetail('${worker.id}','${worker.full_name}')" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">👁 View</button>
+            </td>
+          </tr>
+        `;
+      }));
+
+      tbody.innerHTML = rows.join('');
+    }
+
+    async function openWorkerDetail(workerId, workerName) {
+      selectedWorkerId = workerId;
+      document.getElementById('workerName').textContent = workerName;
+
+      // Get worker's clients
+      const { data: clientsData } = await supabaseClient
+        .from('clients')
+        .select('*')
+        .eq('created_by', workerId)
+        .order('created_at', { ascending: false });
+
+      if (!clientsData) return;
+
+      const totalClients = clientsData.length;
+      const converted = clientsData.filter(c => c.status === 'Converted').length;
+      const inProgress = clientsData.filter(c => c.status !== 'Converted' && c.status !== 'Loss').length;
+      const conversionRate = totalClients > 0 ? Math.round((converted / totalClients) * 100) : 0;
+
+      const todayDate = new Date().toISOString().split('T')[0];
+      const contactedToday = clientsData.filter(c => {
+        const createdDate = new Date(c.created_at).toISOString().split('T')[0];
+        return createdDate === todayDate;
+      }).length;
+
+      const lastActivity = clientsData.length > 0 ? formatDate(clientsData[0].created_at) : '—';
+
+      document.getElementById('detail_totalClients').textContent = totalClients;
+      document.getElementById('detail_converted').textContent = converted;
+      document.getElementById('detail_inProgress').textContent = inProgress;
+      document.getElementById('detail_conversionRate').textContent = conversionRate + '%';
+      document.getElementById('detail_contactedToday').textContent = contactedToday;
+      document.getElementById('detail_lastActivity').textContent = lastActivity;
+
+      // Render recent clients
+      const clientsList = document.getElementById('workerClientsList');
+      if (clientsData.length === 0) {
+        clientsList.innerHTML = '<tr><td colspan="3" class="empty-row">No clients yet.</td></tr>';
+      } else {
+        clientsList.innerHTML = clientsData.slice(0, 10).map(c => `
+          <tr>
+            <td><a href="client-detail.html?id=${c.id}" class="client-link" style="font-size:0.9rem;">${c.full_name}</a></td>
+            <td><span class="status-badge status-${slugify(c.status)}" style="font-size:0.75rem;">${c.status || '—'}</span></td>
+            <td style="font-size:0.85rem;">${formatDate(c.created_at)}</td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('workerDetailModal').classList.add('show');
+    }
+
+    function closeWorkerModal() {
+      document.getElementById('workerDetailModal').classList.remove('show');
+      selectedWorkerId = null;
+    }
+
+    // Search & Filter
+    function filterWorkers() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allWorkers.filter(w => {
+        return !search || (w.full_name || '').toLowerCase().includes(search);
+      });
+      renderWorkers(filtered);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', filterWorkers);
+    document.getElementById('dateFilter').addEventListener('change', () => renderWorkers(allWorkers));
+
+    function roleLabel(r) {
+      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
+    }
+
+    function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }
+    function formatDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
+  </script>
+</body>
+</html>
