@@ -38,7 +38,39 @@
       </div>
     </div>
 
+    <!-- WORKER OVERVIEW (Admin & SuperAdmin) -->
+    <div class="card admin-only" id="workerStatsCard" style="display:none">
+      <div class="card-header">
+        <h2 class="card-title">👷 Worker Performance</h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-num" id="totalWorkers">—</div>
+          <div class="stat-label">Active Workers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-num" id="workerClientsCreated">—</div>
+          <div class="stat-label">Clients Created</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-num" id="workerClientsConverted">—</div>
+          <div class="stat-label">Conversions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-num" id="conversionRate">—%</div>
+          <div class="stat-label">Conversion Rate</div>
+        </div>
+      </div>
+    </div>
+
     <!-- STATS -->
+    <div>
+      <h2 style="margin-bottom:20px;color:var(--text);font-size:1.2rem;font-weight:600;">👥 Client Dashboard</h2>
+    </div>
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">👥</div>
@@ -168,6 +200,8 @@
       if (currentRole === 'admin' || currentRole === 'superadmin') {
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
         document.querySelectorAll('.ts-col').forEach(el => el.style.display = '');
+        document.getElementById('workerStatsCard').style.display = '';
+        loadWorkerStats();
       }
       if (currentRole === 'superadmin') {
         document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
@@ -179,9 +213,47 @@
       loadRecentClients();
     });
 
+    async function loadWorkerStats() {
+      // Get all workers
+      const { data: workers } = await supabaseClient
+        .from('profiles')
+        .select('id')
+        .eq('role', 'worker');
+
+      if (!workers) return;
+      
+      document.getElementById('totalWorkers').textContent = workers.length;
+
+      // Get clients created by workers
+      const { data: clientsData } = await supabaseClient
+        .from('clients')
+        .select('created_by, status');
+
+      if (!clientsData) return;
+
+      const workerIds = workers.map(w => w.id);
+      const workerClients = clientsData.filter(c => workerIds.includes(c.created_by));
+      const convertedCount = workerClients.filter(c => c.status === 'Converted').length;
+
+      document.getElementById('workerClientsCreated').textContent = workerClients.length;
+      document.getElementById('workerClientsConverted').textContent = convertedCount;
+
+      const rate = workerClients.length > 0 
+        ? Math.round((convertedCount / workerClients.length) * 100) 
+        : 0;
+      document.getElementById('conversionRate').textContent = rate;
+    }
+
     async function loadStats() {
-      const { data } = await supabaseClient.from('clients').select('status');
-      if (!data) return;
+      const { data, error } = await supabaseClient
+        .from('clients')
+        .select('*');
+      
+      if (error || !data) {
+        console.error('Error loading stats:', error);
+        return;
+      }
+
       document.getElementById('totalClients').textContent = data.length;
       document.getElementById('newClients').textContent = data.filter(c => c.status === 'New').length;
       document.getElementById('referredClients').textContent = data.filter(c => c.status === 'Referred client').length;
@@ -196,12 +268,14 @@
         .limit(5);
 
       const tbody = document.getElementById('recentTable');
+      const isAdmin = currentRole === 'admin' || currentRole === 'superadmin';
+      const colSpan = isAdmin ? 5 : 4;
+
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No clients yet.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" class="empty-row">No clients yet.</td></tr>`;
         return;
       }
 
-      const isAdmin = currentRole === 'admin' || currentRole === 'superadmin';
       tbody.innerHTML = data.map(c => `
         <tr>
           <td><a href="client-detail.html?id=${c.id}" class="client-link">${c.full_name}</a></td>
