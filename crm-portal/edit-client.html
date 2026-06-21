@@ -86,6 +86,9 @@
         <div class="form-group">
           <label>Status</label>
           <select id="status">
+            <option value="New">🆕 New</option>
+            <option value="Referred client">🔄 Referred client</option>
+            <option value="Return Client">🔁 Return Client</option>
             <option value="Converted">✅ Converted</option>
             <option value="Loss">❌ Loss</option>
           </select>
@@ -130,8 +133,8 @@
       currentUser = user;
       const profile = await getProfile(user.id);
 
-      // Only admin & superadmin can edit
-      if (profile.role === 'worker' || profile.role === 'tester') {
+      // Only 'tester' role cannot edit
+      if (profile.role === 'tester') {
         alert('You do not have permission to edit clients.');
         window.location.href = 'clients.html';
         return;
@@ -166,7 +169,7 @@
       document.getElementById('trip_type').value = data.trip_type || '';
       document.getElementById('registered_date').value = data.registered_date ? data.registered_date.split('T')[0] : '';
       document.getElementById('source_of_lead').value = data.source_of_lead || '';
-      document.getElementById('status').value = data.status || 'Converted';
+      document.getElementById('status').value = data.status || 'New';
       document.getElementById('notes').value = data.notes || '';
 
       existingDocUrl = data.document_url;
@@ -213,7 +216,7 @@
         trip_type: document.getElementById('trip_type').value || null,
         registered_date: document.getElementById('registered_date').value || null,
         source_of_lead: document.getElementById('source_of_lead').value || null,
-        status: document.getElementById('status').value || 'Converted',
+        status: document.getElementById('status').value || 'New',
         notes: document.getElementById('notes').value.trim() || null,
         document_url,
         updated_by: currentUser.id,

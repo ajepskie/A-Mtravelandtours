@@ -39,6 +39,9 @@
         <input type="text" id="searchInput" placeholder="🔍 Search by name, passport, nationality..."/>
         <select id="statusFilter">
           <option value="">All Statuses</option>
+          <option>🆕 New</option>
+          <option>🔄 Referred client</option>
+          <option>🔁 Return Client</option>
           <option>✅ Converted</option>
           <option>❌ Loss</option>
         </select>
@@ -142,7 +145,8 @@
     function renderClients(clients) {
       const tbody = document.getElementById('clientsTable');
       const isAdmin = currentRole === 'admin' || currentRole === 'superadmin';
-      const canEdit = currentRole === 'admin' || currentRole === 'superadmin';
+      const canEdit = currentRole !== 'tester';  // Worker, Admin, SuperAdmin can edit
+      const canDelete = currentRole === 'admin' || currentRole === 'superadmin';  // Only Admin & SuperAdmin can delete
 
       if (clients.length === 0) {
         tbody.innerHTML = '<tr><td colspan="11" class="empty-row">No clients found.</td></tr>';
@@ -165,7 +169,7 @@
             <div style="display:flex;gap:8px;">
               <a href="client-detail.html?id=${c.id}" class="btn btn-ghost" style="padding:6px 12px;font-size:0.8rem;">👁 View</a>
               ${canEdit ? `<a href="edit-client.html?id=${c.id}" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">✏️ Edit</a>` : ''}
-              ${canEdit ? `<button onclick="openDeleteModal('${c.id}','${c.full_name}')" class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;">🗑️</button>` : ''}
+              ${canDelete ? `<button onclick="openDeleteModal('${c.id}','${c.full_name}')" class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;">🗑️</button>` : ''}
             </div>
           </td>
         </tr>

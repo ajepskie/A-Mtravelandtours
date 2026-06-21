@@ -86,6 +86,9 @@
         <div class="form-group">
           <label>Status</label>
           <select id="status">
+            <option value="New">🆕 New</option>
+            <option value="Referred client">🔄 Referred client</option>
+            <option value="Return Client">🔁 Return Client</option>
             <option value="Converted">✅ Converted</option>
             <option value="Loss">❌ Loss</option>
           </select>
@@ -185,7 +188,7 @@
         trip_type: document.getElementById('trip_type').value || null,
         registered_date: document.getElementById('registered_date').value || null,
         source_of_lead: document.getElementById('source_of_lead').value || null,
-        status: document.getElementById('status').value || 'Converted',
+        status: document.getElementById('status').value || 'New',
         notes: document.getElementById('notes').value.trim() || null,
         document_url,
         created_by: currentUser.id,
