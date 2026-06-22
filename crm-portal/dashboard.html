@@ -388,6 +388,7 @@
       t.className = `toast toast-${type} show`;
       setTimeout(() => t.classList.remove('show'), 3500);
     }
+      function roleLabel(r) {
       return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
     }
 
