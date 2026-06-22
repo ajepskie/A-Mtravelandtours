@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A-M Travel CRM — Sales & Quotation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/crm.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    /* ── SALES SPECIFIC STYLES ── */
+    .currency-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .currency-btn {
+      padding: 8px 20px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .currency-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .line-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    .line-items-table th {
+      text-align: left;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+
+    .line-items-table td {
+      padding: 10px 8px;
+      vertical-align: middle;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .line-items-table input,
+    .line-items-table select {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      border-radius: 8px;
+    }
+
+    .line-items-table .item-total {
+      font-weight: 600;
+      color: var(--success);
+      font-size: 0.9rem;
+      white-space: nowrap;
+      padding-right: 12px;
+    }
+
+    .delete-row-btn {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.2);
+      color: var(--error);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: background 0.2s;
+    }
+
+    .delete-row-btn:hover { background: rgba(239,68,68,0.2); }
+
+    .summary-box {
+      background: rgba(37,99,235,0.05);
+      border: 1px solid rgba(37,99,235,0.15);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.9rem;
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { color: var(--muted); }
+    .summary-value { font-weight: 500; }
+
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0 0;
+      margin-top: 8px;
+      border-top: 2px solid rgba(37,99,235,0.3);
+    }
+
+    .summary-total-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .summary-total-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .add-item-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed rgba(255,255,255,0.15);
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 10px;
+      width: 100%;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .add-item-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(37,99,235,0.05);
+    }
+
+    .quote-ref {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── QUOTES LIST ── */
+    .quotes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .quote-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: transform 0.2s, border-color 0.2s;
+      cursor: pointer;
+    }
+
+    .quote-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(37,99,235,0.3);
+    }
+
+    .quote-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .quote-card-ref {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .quote-card-client {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .quote-card-total {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-top: 12px;
+    }
+
+    /* ── PDF PRINT STYLES ── */
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%;
+        background: white;
+        color: black;
+        padding: 40px;
+        font-family: Arial, sans-serif;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">A-M <span>Travel</span></div>
+    <div class="sidebar-role" id="sidebarRole">Loading...</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+      <a href="clients.html" class="nav-item">👥 Clients</a>
+      <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="sales.html" class="nav-item active">💰 Sales & Quotes</a>
+      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
+    </nav>
+    <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Sales & Quotation</h1>
+        <p class="page-sub">Build quotes, calculate margins, generate PDF</p>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div class="currency-toggle">
+          <button class="currency-btn active" id="btnAED" onclick="setCurrency('AED')">AED</button>
+          <button class="currency-btn" id="btnPHP" onclick="setCurrency('PHP')">PHP</button>
+        </div>
+        <button class="btn btn-primary" onclick="showNewQuote()">➕ New Quote</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:28px;">
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-num" id="totalQuotes">—</div>
+        <div class="stat-label">Total Quotes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-num" id="totalRevenue">—</div>
+        <div class="stat-label">Total Revenue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-num" id="avgMargin">—</div>
+        <div class="stat-label">Avg Margin</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-num" id="approvedQuotes">—</div>
+        <div class="stat-label">Approved</div>
+      </div>
+    </div>
+
+    <!-- NEW QUOTE FORM -->
+    <div class="card" id="newQuoteSection" style="display:none;">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">📋 New Quotation</h2>
+          <div class="quote-ref" id="quoteRef">REF: Generating...</div>
+        </div>
+        <button class="btn btn-ghost" onclick="hideNewQuote()">✕ Cancel</button>
+      </div>
+
+      <!-- CLIENT SELECTION -->
+      <div class="form-grid" style="margin-bottom:20px;">
+        <div class="form-group">
+          <label>Select Client *</label>
+          <select id="quoteClient" onchange="fillClientDetails()">
+            <option value="">Choose existing client...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Or Enter Client Name</label>
+          <input type="text" id="quoteClientName" placeholder="Walk-in or new client name"/>
+        </div>
+        <div class="form-group">
+          <label>Quote Status</label>
+          <select id="quoteStatus">
+            <option value="Draft">Draft</option>
+            <option value="Sent">Sent</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Travel Date</label>
+          <input type="date" id="travelDate"/>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>Notes / Remarks</label>
+          <textarea id="quoteNotes" placeholder="Any special requests, inclusions, or terms..." style="min-height:70px;"></textarea>
+        </div>
+      </div>
+
+      <!-- LINE ITEMS -->
+      <div class="card-header" style="margin-bottom:12px;">
+        <h3 style="font-size:0.95rem;font-weight:600;">✈️ Quote Line Items</h3>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="line-items-table" id="lineItemsTable">
+          <thead>
+            <tr>
+              <th style="min-width:140px;">Item Type</th>
+              <th style="min-width:180px;">Description</th>
+              <th style="min-width:130px;">Cost (<span class="curr-label">AED</span>)</th>
+              <th style="min-width:100px;">Margin %</th>
+              <th style="min-width:130px;">Upsell (<span class="curr-label">AED</span>)</th>
+              <th style="min-width:130px;">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="lineItemsBody">
+            <!-- rows added dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <button class="add-item-btn" onclick="addLineItem()">➕ Add Line Item</button>
+
+      <!-- SUMMARY -->
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;margin-top:28px;" class="summary-wrap">
+        <div>
+          <label style="display:block;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Global Discount</label>
+          <div style="display:flex;gap:12px;align-items:center;">
+            <input type="number" id="globalDiscount" placeholder="0" min="0" style="width:120px;" oninput="recalculate()"/>
+            <select id="discountType" onchange="recalculate()" style="width:120px;">
+              <option value="fixed">Fixed Amount</option>
+              <option value="percent">Percentage %</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          <div class="summary-row">
+            <span class="summary-label">Subtotal (Cost)</span>
+            <span class="summary-value" id="sumCost">— <span class="curr-label">AED</span></span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Total Margin</span>
+            <span class="summary-value" id="sumMargin" style="color:var(--success);">— <span class="curr-label">AED</span></span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Total Upsell</span>
+            <span class="summary-value" id="sumUpsell">— <span class="curr-label">AED</span></span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Discount</span>
+            <span class="summary-value" id="sumDiscount" style="color:var(--error);">— <span class="curr-label">AED</span></span>
+          </div>
+          <div class="summary-total">
+            <span class="summary-total-label">TOTAL CLIENT PAYS</span>
+            <span class="summary-total-value" id="sumTotal">0.00 <span class="curr-label">AED</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="btn-row" style="margin-top:24px;">
+        <button class="btn btn-primary" onclick="saveQuote()">💾 Save Quote</button>
+        <button class="btn btn-success" onclick="generatePDF()">📄 Generate PDF</button>
+        <button class="btn btn-ghost" onclick="hideNewQuote()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- SAVED QUOTES LIST -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">📁 Saved Quotes</h2>
+        <input type="text" id="quoteSearch" placeholder="🔍 Search quotes..." style="width:220px;padding:8px 12px;font-size:0.85rem;" oninput="filterQuotes()"/>
+      </div>
+      <div class="quotes-grid" id="quotesGrid">
+        <div style="color:var(--muted);font-size:0.9rem;padding:20px;">Loading quotes...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- QUOTE DETAIL MODAL -->
+  <div class="modal-overlay" id="quoteDetailModal">
+    <div class="modal" style="max-width:700px;width:95%;max-height:85vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div>
+          <h3 id="modalQuoteRef">Quote Details</h3>
+          <p style="color:var(--muted);font-size:0.85rem;margin-top:4px;" id="modalQuoteClient">—</p>
+        </div>
+        <button class="btn btn-ghost" onclick="closeQuoteModal()" style="padding:6px 12px;">✕</button>
+      </div>
+      <div id="modalQuoteContent"></div>
+      <div class="btn-row" style="margin-top:20px;">
+        <button class="btn btn-success" onclick="generatePDFFromModal()">📄 Download PDF</button>
+        <button class="btn btn-danger" id="modalDeleteBtn" onclick="deleteQuote()">🗑️ Delete</button>
+        <button class="btn btn-ghost" onclick="closeQuoteModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script>
+    let currentCurrency = 'AED';
+    let currentUser = null;
+    let currentRole = '';
+    let allQuotes = [];
+    let activeQuoteId = null;
+    let lineItemCount = 0;
+
+    const RATES = { AED: 1, PHP: 15.5 }; // 1 AED ≈ 15.5 PHP (update as needed)
+
+    const ITEM_TYPES = [
+      '✈️ Flight',
+      '🏨 Hotel',
+      '🌍 Tour Package',
+      '🚗 Transfer',
+      '📋 Visa Fee',
+      '🛡️ Travel Insurance',
+      '🎫 Activity / Ticket',
+      '📦 Other'
+    ];
+
+    window.addEventListener('load', async () => {
+      const user = await requireAuth();
+      currentUser = user;
+      const profile = await getProfile(user.id);
+      currentRole = profile.role;
+
+      document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
+
+      if (currentRole === 'admin' || currentRole === 'superadmin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+      }
+      if (currentRole === 'superadmin') {
+        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
+      }
+
+      generateRef();
+      loadClients();
+      loadQuotes();
+      addLineItem(); // Start with one empty line item
+    });
+
+    // ── CURRENCY ──
+    function setCurrency(currency) {
+      currentCurrency = currency;
+      document.getElementById('btnAED').classList.toggle('active', currency === 'AED');
+      document.getElementById('btnPHP').classList.toggle('active', currency === 'PHP');
+      document.querySelectorAll('.curr-label').forEach(el => el.textContent = currency);
+      recalculate();
+    }
+
+    // ── QUOTE REF ──
+    function generateRef() {
+      const now = new Date();
+      const ref = `AMT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${Math.floor(Math.random()*9000+1000)}`;
+      document.getElementById('quoteRef').textContent = `REF: ${ref}`;
+      return ref;
+    }
+
+    // ── LOAD CLIENTS ──
+    async function loadClients() {
+      const { data } = await supabaseClient.from('clients').select('id, full_name').order('full_name');
+      const select = document.getElementById('quoteClient');
+      if (data) {
+        data.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.full_name;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    function fillClientDetails() {
+      const select = document.getElementById('quoteClient');
+      const option = select.options[select.selectedIndex];
+      if (option.value) {
+        document.getElementById('quoteClientName').value = option.text;
+      }
+    }
+
+    // ── SHOW/HIDE FORM ──
+    function showNewQuote() {
+      document.getElementById('newQuoteSection').style.display = '';
+      document.getElementById('newQuoteSection').scrollIntoView({ behavior: 'smooth' });
+      generateRef();
+    }
+
+    function hideNewQuote() {
+      document.getElementById('newQuoteSection').style.display = 'none';
+    }
+
+    // ── LINE ITEMS ──
+    function addLineItem(data = {}) {
+      lineItemCount++;
+      const id = lineItemCount;
+      const tbody = document.getElementById('lineItemsBody');
+      const row = document.createElement('tr');
+      row.id = `row-${id}`;
+      row.innerHTML = `
+        <td>
+          <select class="item-type" onchange="recalculate()" style="min-width:130px;">
+            ${ITEM_TYPES.map(t => `<option ${data.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <input type="text" class="item-desc" placeholder="e.g. Manila → Dubai, Economy" value="${data.desc || ''}" style="min-width:170px;"/>
+        </td>
+        <td>
+          <input type="number" class="item-cost" placeholder="0.00" min="0" step="0.01" value="${data.cost || ''}" oninput="recalcRow(${id})" style="min-width:110px;"/>
+        </td>
+        <td>
+          <input type="number" class="item-margin" placeholder="0" min="0" max="100" step="0.1" value="${data.margin || ''}" oninput="recalcRow(${id})" style="min-width:80px;"/>
+        </td>
+        <td>
+          <input type="number" class="item-upsell" placeholder="0.00" min="0" step="0.01" value="${data.upsell || ''}" oninput="recalcRow(${id})" style="min-width:110px;"/>
+        </td>
+        <td class="item-total" id="total-${id}">0.00 ${currentCurrency}</td>
+        <td>
+          <button class="delete-row-btn" onclick="removeLineItem(${id})">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+      recalcRow(id);
+    }
+
+    function removeLineItem(id) {
+      const row = document.getElementById(`row-${id}`);
+      if (row) row.remove();
+      recalculate();
+    }
+
+    function recalcRow(id) {
+      const row = document.getElementById(`row-${id}`);
+      if (!row) return;
+      const cost = parseFloat(row.querySelector('.item-cost').value) || 0;
+      const margin = parseFloat(row.querySelector('.item-margin').value) || 0;
+      const upsell = parseFloat(row.querySelector('.item-upsell').value) || 0;
+      const marginAmount = cost * (margin / 100);
+      const total = cost + marginAmount + upsell;
+      row.querySelector(`#total-${id}`).textContent = `${formatMoney(total)} ${currentCurrency}`;
+      recalculate();
+    }
+
+    function recalculate() {
+      const rows = document.querySelectorAll('#lineItemsBody tr');
+      let totalCost = 0, totalMargin = 0, totalUpsell = 0;
+
+      rows.forEach(row => {
+        const cost = parseFloat(row.querySelector('.item-cost')?.value) || 0;
+        const margin = parseFloat(row.querySelector('.item-margin')?.value) || 0;
+        const upsell = parseFloat(row.querySelector('.item-upsell')?.value) || 0;
+        const marginAmount = cost * (margin / 100);
+        totalCost += cost;
+        totalMargin += marginAmount;
+        totalUpsell += upsell;
+
+        // Update row total
+        const rowId = row.id?.replace('row-', '');
+        if (rowId) {
+          const totalEl = document.getElementById(`total-${rowId}`);
+          if (totalEl) totalEl.textContent = `${formatMoney(cost + marginAmount + upsell)} ${currentCurrency}`;
+        }
+      });
+
+      // Apply discount
+      const discountInput = parseFloat(document.getElementById('globalDiscount')?.value) || 0;
+      const discountType = document.getElementById('discountType')?.value;
+      let discountAmount = 0;
+      const subtotal = totalCost + totalMargin + totalUpsell;
+
+      if (discountType === 'percent') {
+        discountAmount = subtotal * (discountInput / 100);
+      } else {
+        discountAmount = discountInput;
+      }
+
+      const grandTotal = Math.max(0, subtotal - discountAmount);
+
+      document.getElementById('sumCost').innerHTML = `${formatMoney(totalCost)} <span class="curr-label">${currentCurrency}</span>`;
+      document.getElementById('sumMargin').innerHTML = `${formatMoney(totalMargin)} <span class="curr-label">${currentCurrency}</span>`;
+      document.getElementById('sumUpsell').innerHTML = `${formatMoney(totalUpsell)} <span class="curr-label">${currentCurrency}</span>`;
+      document.getElementById('sumDiscount').innerHTML = `-${formatMoney(discountAmount)} <span class="curr-label">${currentCurrency}</span>`;
+      document.getElementById('sumTotal').innerHTML = `${formatMoney(grandTotal)} <span class="curr-label">${currentCurrency}</span>`;
+    }
+
+    // ── SAVE QUOTE ──
+    async function saveQuote() {
+      const clientId = document.getElementById('quoteClient').value || null;
+      const clientName = document.getElementById('quoteClientName').value.trim();
+      const status = document.getElementById('quoteStatus').value;
+      const travelDate = document.getElementById('travelDate').value || null;
+      const notes = document.getElementById('quoteNotes').value.trim();
+      const ref = document.getElementById('quoteRef').textContent.replace('REF: ', '');
+
+      if (!clientName) { showToast('Please enter or select a client.', 'error'); return; }
+
+      const items = getLineItems();
+      if (items.length === 0) { showToast('Please add at least one line item.', 'error'); return; }
+
+      const totals = getTotals();
+
+      const { error } = await supabaseClient.from('quotes').insert([{
+        ref,
+        client_id: clientId,
+        client_name: clientName,
+        status,
+        travel_date: travelDate,
+        notes,
+        currency: currentCurrency,
+        items: JSON.stringify(items),
+        total_cost: totals.cost,
+        total_margin: totals.margin,
+        total_upsell: totals.upsell,
+        discount: totals.discount,
+        grand_total: totals.grandTotal,
+        created_by: currentUser.id
+      }]);
+
+      if (error) {
+        showToast('Error saving quote: ' + error.message, 'error');
+        return;
+      }
+
+      await logActivity('CREATE_QUOTE', `Created quote ${ref} for ${clientName}`);
+      showToast('Quote saved successfully!', 'success');
+      hideNewQuote();
+      loadQuotes();
+      resetForm();
+    }
+
+    function getLineItems() {
+      const rows = document.querySelectorAll('#lineItemsBody tr');
+      const items = [];
+      rows.forEach(row => {
+        const cost = parseFloat(row.querySelector('.item-cost')?.value) || 0;
+        if (cost > 0 || row.querySelector('.item-desc')?.value) {
+          items.push({
+            type: row.querySelector('.item-type')?.value || '',
+            desc: row.querySelector('.item-desc')?.value || '',
+            cost,
+            margin: parseFloat(row.querySelector('.item-margin')?.value) || 0,
+            upsell: parseFloat(row.querySelector('.item-upsell')?.value) || 0,
+            total: cost + (cost * ((parseFloat(row.querySelector('.item-margin')?.value) || 0) / 100)) + (parseFloat(row.querySelector('.item-upsell')?.value) || 0)
+          });
+        }
+      });
+      return items;
+    }
+
+    function getTotals() {
+      const items = getLineItems();
+      let cost = 0, margin = 0, upsell = 0;
+      items.forEach(i => {
+        cost += i.cost;
+        margin += i.cost * (i.margin / 100);
+        upsell += i.upsell;
+      });
+      const subtotal = cost + margin + upsell;
+      const discountInput = parseFloat(document.getElementById('globalDiscount')?.value) || 0;
+      const discountType = document.getElementById('discountType')?.value;
+      const discount = discountType === 'percent' ? subtotal * (discountInput / 100) : discountInput;
+      return { cost, margin, upsell, discount, grandTotal: Math.max(0, subtotal - discount) };
+    }
+
+    function resetForm() {
+      document.getElementById('quoteClient').value = '';
+      document.getElementById('quoteClientName').value = '';
+      document.getElementById('quoteStatus').value = 'Draft';
+      document.getElementById('travelDate').value = '';
+      document.getElementById('quoteNotes').value = '';
+      document.getElementById('globalDiscount').value = '';
+      document.getElementById('lineItemsBody').innerHTML = '';
+      lineItemCount = 0;
+      addLineItem();
+      recalculate();
+    }
+
+    // ── LOAD QUOTES ──
+    async function loadQuotes() {
+      const { data } = await supabaseClient
+        .from('quotes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      allQuotes = data || [];
+      renderQuotes(allQuotes);
+
+      // Stats
+      document.getElementById('totalQuotes').textContent = allQuotes.length;
+      const totalRev = allQuotes.reduce((s, q) => s + (q.grand_total || 0), 0);
+      document.getElementById('totalRevenue').textContent = formatMoney(totalRev);
+      const avgMgn = allQuotes.length ? allQuotes.reduce((s, q) => s + (q.total_margin || 0), 0) / allQuotes.length : 0;
+      document.getElementById('avgMargin').textContent = formatMoney(avgMgn);
+      document.getElementById('approvedQuotes').textContent = allQuotes.filter(q => q.status === 'Approved').length;
+    }
+
+    function renderQuotes(quotes) {
+      const grid = document.getElementById('quotesGrid');
+      if (!quotes.length) {
+        grid.innerHTML = '<div style="color:var(--muted);font-size:0.9rem;padding:20px;">No quotes yet. Create your first one!</div>';
+        return;
+      }
+      grid.innerHTML = quotes.map(q => `
+        <div class="quote-card" onclick="openQuoteModal('${q.id}')">
+          <div class="quote-card-header">
+            <div class="quote-card-ref">${q.ref || '—'}</div>
+            <span class="status-badge status-${slugify(q.status)}">${q.status}</span>
+          </div>
+          <div class="quote-card-client">${q.client_name || '—'}</div>
+          <div style="color:var(--muted);font-size:0.8rem;">${q.travel_date ? '✈️ ' + q.travel_date : 'No travel date set'}</div>
+          <div style="color:var(--muted);font-size:0.8rem;margin-top:4px;">${q.currency || 'AED'}</div>
+          <div class="quote-card-total">${formatMoney(q.grand_total)} ${q.currency || 'AED'}</div>
+        </div>
+      `).join('');
+    }
+
+    function filterQuotes() {
+      const search = document.getElementById('quoteSearch').value.toLowerCase();
+      const filtered = allQuotes.filter(q =>
+        (q.client_name || '').toLowerCase().includes(search) ||
+        (q.ref || '').toLowerCase().includes(search) ||
+        (q.status || '').toLowerCase().includes(search)
+      );
+      renderQuotes(filtered);
+    }
+
+    // ── MODAL ──
+    async function openQuoteModal(id) {
+      activeQuoteId = id;
+      const quote = allQuotes.find(q => q.id === id);
+      if (!quote) return;
+
+      document.getElementById('modalQuoteRef').textContent = quote.ref || 'Quote Details';
+      document.getElementById('modalQuoteClient').textContent = `Client: ${quote.client_name} • ${quote.status} • ${quote.currency}`;
+
+      const items = JSON.parse(quote.items || '[]');
+      document.getElementById('modalQuoteContent').innerHTML = `
+        <div style="overflow-x:auto;margin-bottom:20px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Cost</th>
+                <th>Margin %</th>
+                <th>Upsell</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(i => `
+                <tr>
+                  <td>${i.type}</td>
+                  <td>${i.desc || '—'}</td>
+                  <td>${formatMoney(i.cost)} ${quote.currency}</td>
+                  <td>${i.margin}%</td>
+                  <td>${formatMoney(i.upsell)} ${quote.currency}</td>
+                  <td style="font-weight:600;color:var(--success)">${formatMoney(i.total)} ${quote.currency}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,0.03);border-radius:12px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.9rem;"><span style="color:var(--muted)">Cost</span><span>${formatMoney(quote.total_cost)} ${quote.currency}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:0.9rem;"><span style="color:var(--muted)">Margin</span><span style="color:var(--success)">${formatMoney(quote.total_margin)} ${quote.currency}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:0.9rem;"><span style="color:var(--muted)">Upsell</span><span>${formatMoney(quote.total_upsell)} ${quote.currency}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:0.9rem;"><span style="color:var(--muted)">Discount</span><span style="color:var(--error)">-${formatMoney(quote.discount)} ${quote.currency}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:1.1rem;font-weight:700;border-top:1px solid var(--border);padding-top:10px;margin-top:4px;"><span>TOTAL</span><span style="color:var(--accent)">${formatMoney(quote.grand_total)} ${quote.currency}</span></div>
+        </div>
+        ${quote.notes ? `<div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;font-size:0.85rem;color:var(--muted);">📝 ${quote.notes}</div>` : ''}
+      `;
+
+      document.getElementById('quoteDetailModal').classList.add('show');
+    }
+
+    function closeQuoteModal() {
+      document.getElementById('quoteDetailModal').classList.remove('show');
+      activeQuoteId = null;
+    }
+
+    async function deleteQuote() {
+      if (!activeQuoteId) return;
+      if (!confirm('Delete this quote? This cannot be undone.')) return;
+      await supabaseClient.from('quotes').delete().eq('id', activeQuoteId);
+      showToast('Quote deleted.', 'success');
+      closeQuoteModal();
+      loadQuotes();
+    }
+
+    // ── PDF GENERATION ──
+    function generatePDF() {
+      const clientName = document.getElementById('quoteClientName').value.trim() || 'Client';
+      const ref = document.getElementById('quoteRef').textContent.replace('REF: ', '');
+      const travelDate = document.getElementById('travelDate').value || '—';
+      const notes = document.getElementById('quoteNotes').value.trim();
+      const items = getLineItems();
+      const totals = getTotals();
+      buildPDF({ clientName, ref, travelDate, notes, items, totals, currency: currentCurrency });
+    }
+
+    function generatePDFFromModal() {
+      const quote = allQuotes.find(q => q.id === activeQuoteId);
+      if (!quote) return;
+      const items = JSON.parse(quote.items || '[]');
+      const totals = { cost: quote.total_cost, margin: quote.total_margin, upsell: quote.total_upsell, discount: quote.discount, grandTotal: quote.grand_total };
+      buildPDF({ clientName: quote.client_name, ref: quote.ref, travelDate: quote.travel_date || '—', notes: quote.notes || '', items, totals, currency: quote.currency });
+    }
+
+    function buildPDF({ clientName, ref, travelDate, notes, items, totals, currency }) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+
+      // ── HEADER BACKGROUND ──
+      doc.setFillColor(2, 62, 138); // #023E8A
+      doc.rect(0, 0, pageW, 42, 'F');
+
+      // ── COMPANY NAME ──
+      doc.setTextColor(244, 244, 244);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.text('AM TRAVEL & TOURS', 14, 18);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(200, 220, 255);
+      doc.text('Est. 2026  |  Dubai, UAE  |  +971 56 471 8805', 14, 26);
+      doc.text('amtravelandtours@gmail.com  |  amtravel.ph', 14, 32);
+
+      // ── QUOTATION LABEL ──
+      doc.setFillColor(0, 150, 199); // #0096C7
+      doc.rect(pageW - 55, 8, 45, 26, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('QUOTATION', pageW - 47, 18);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(ref, pageW - 47, 25);
+      doc.text(new Date().toLocaleDateString(), pageW - 47, 31);
+
+      // ── CLIENT INFO ──
+      doc.setTextColor(30, 30, 30);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PREPARED FOR:', 14, 54);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(13);
+      doc.text(clientName, 14, 62);
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Travel Date: ${travelDate}`, 14, 69);
+      doc.text(`Currency: ${currency}`, 14, 75);
+
+      // ── LINE ITEMS TABLE ──
+      doc.autoTable({
+        startY: 84,
+        head: [['Type', 'Description', `Cost (${currency})`, 'Margin %', `Upsell (${currency})`, `Total (${currency})`]],
+        body: items.map(i => [
+          i.type,
+          i.desc || '—',
+          formatMoney(i.cost),
+          `${i.margin}%`,
+          formatMoney(i.upsell),
+          formatMoney(i.total)
+        ]),
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: [2, 62, 138], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 248, 255] },
+        columnStyles: { 0: { cellWidth: 28 }, 1: { cellWidth: 55 }, 2: { cellWidth: 25 }, 3: { cellWidth: 20 }, 4: { cellWidth: 25 }, 5: { cellWidth: 25 } }
+      });
+
+      const finalY = doc.lastAutoTable.finalY + 8;
+
+      // ── SUMMARY BOX ──
+      doc.setFillColor(245, 248, 255);
+      doc.roundedRect(pageW - 90, finalY, 76, 52, 3, 3, 'F');
+      doc.setDrawColor(2, 62, 138);
+      doc.roundedRect(pageW - 90, finalY, 76, 52, 3, 3, 'S');
+
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      const sx = pageW - 86;
+      doc.text('Subtotal Cost:', sx, finalY + 9);
+      doc.text('Total Margin:', sx, finalY + 17);
+      doc.text('Total Upsell:', sx, finalY + 25);
+      doc.text('Discount:', sx, finalY + 33);
+
+      doc.setTextColor(30, 30, 30);
+      doc.text(`${formatMoney(totals.cost)} ${currency}`, pageW - 16, finalY + 9, { align: 'right' });
+      doc.setTextColor(22, 163, 74);
+      doc.text(`${formatMoney(totals.margin)} ${currency}`, pageW - 16, finalY + 17, { align: 'right' });
+      doc.setTextColor(30, 30, 30);
+      doc.text(`${formatMoney(totals.upsell)} ${currency}`, pageW - 16, finalY + 25, { align: 'right' });
+      doc.setTextColor(220, 38, 38);
+      doc.text(`-${formatMoney(totals.discount)} ${currency}`, pageW - 16, finalY + 33, { align: 'right' });
+
+      // Total line
+      doc.setFillColor(2, 62, 138);
+      doc.rect(pageW - 90, finalY + 38, 76, 14, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('TOTAL:', sx, finalY + 47);
+      doc.text(`${formatMoney(totals.grandTotal)} ${currency}`, pageW - 16, finalY + 47, { align: 'right' });
+
+      // ── NOTES ──
+      if (notes) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Notes:', 14, finalY + 12);
+        doc.text(doc.splitTextToSize(notes, 100), 14, finalY + 18);
+      }
+
+      // ── FOOTER ──
+      const footerY = doc.internal.pageSize.getHeight() - 20;
+      doc.setFillColor(2, 62, 138);
+      doc.rect(0, footerY - 4, pageW, 24, 'F');
+      doc.setTextColor(200, 220, 255);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.text('This quotation is valid for 7 days from the date of issue. Prices are subject to availability and confirmation.', pageW / 2, footerY + 2, { align: 'center' });
+      doc.text('AM Travel & Tours  |  Dubai, UAE  |  +971 56 471 8805', pageW / 2, footerY + 8, { align: 'center' });
+
+      doc.save(`AMT_Quote_${ref}.pdf`);
+      showToast('PDF downloaded!', 'success');
+    }
+
+    // ── HELPERS ──
+    function formatMoney(n) {
+      return (parseFloat(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }
+
+    function roleLabel(r) {
+      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast toast-${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+  </script>
+</body>
+</html>
