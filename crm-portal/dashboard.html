@@ -71,30 +71,9 @@
 
     <!-- STATS -->
     <div>
-      <h2 style="margin-bottom:20px;color:var(--text);font-size:1.2rem;font-weight:600;">👥 Client Dashboard</h2>
+      <h2 style="margin-bottom:20px;color:var(--text);font-size:1.2rem;font-weight:600;">� Dashboard Summary</h2>
     </div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-num" id="totalClients">—</div>
-        <div class="stat-label">Total Clients</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">🆕</div>
-        <div class="stat-num" id="newClients">—</div>
-        <div class="stat-label">New</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">🔄</div>
-        <div class="stat-num" id="referredClients">—</div>
-        <div class="stat-label">Referred</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">✅</div>
-        <div class="stat-num" id="convertedClients">—</div>
-        <div class="stat-label">Converted</div>
-      </div>
-    </div>
+    <div class="stats-grid" id="statsGrid"></div>
 
     <!-- RECENT CLIENTS -->
     <div class="card">
@@ -190,25 +169,24 @@
 
     window.addEventListener('load', async () => {
       const user = await requireAuth();
+      if (!user) return;
+
       currentUserId = user.id;
       const profile = await getProfile(user.id);
       currentRole = profile.role;
 
       document.getElementById('userName').textContent = profile.full_name || user.email;
       document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
+      document.getElementById('sidebarRole').className = `sidebar-role role-pill role-${roleClass(currentRole)}`;
       document.getElementById('rolePill').textContent = roleLabel(currentRole);
-      document.getElementById('rolePill').className = `role-pill role-${currentRole}`;
+      document.getElementById('rolePill').className = `role-pill role-${roleClass(currentRole)}`;
 
-      // Show role-based nav
-      if (currentRole === 'admin' || currentRole === 'superadmin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-        document.querySelectorAll('.ts-col').forEach(el => el.style.display = '');
-        document.getElementById('workerStatsCard').style.display = '';
+      applyRoleUI(currentRole);
+
+      if (isAdminLevel(currentRole)) {
         loadWorkerStats();
       }
-      if (currentRole === 'superadmin') {
-        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
-        document.getElementById('employeesCard').style.display = '';
+      if (canManageUsers(currentRole)) {
         loadEmployees();
       }
 
@@ -217,17 +195,15 @@
     });
 
     async function loadWorkerStats() {
-      // Get all workers
       const { data: workers } = await supabaseClient
         .from('profiles')
         .select('id')
-        .eq('role', 'worker');
+        .eq('Roles', 'Employee / Worker');
 
       if (!workers) return;
-      
+
       document.getElementById('totalWorkers').textContent = workers.length;
 
-      // Get clients created by workers
       const { data: clientsData } = await supabaseClient
         .from('clients')
         .select('created_by, status');
@@ -241,37 +217,93 @@
       document.getElementById('workerClientsCreated').textContent = workerClients.length;
       document.getElementById('workerClientsConverted').textContent = convertedCount;
 
-      const rate = workerClients.length > 0 
-        ? Math.round((convertedCount / workerClients.length) * 100) 
+      const rate = workerClients.length > 0
+        ? Math.round((convertedCount / workerClients.length) * 100)
         : 0;
-      document.getElementById('conversionRate').textContent = rate;
+      document.getElementById('conversionRate').textContent = `${rate}%`;
     }
 
     async function loadStats() {
-      const { data, error } = await supabaseClient
-        .from('clients')
-        .select('*');
-      
-      if (error || !data) {
-        console.error('Error loading stats:', error);
+      const isAdmin = isAdminLevel(currentRole);
+
+      let clientsQuery = supabaseClient.from('clients').select('*');
+      if (!isAdmin) {
+        clientsQuery = clientsQuery.eq('created_by', currentUserId);
+      }
+
+      const { data: clientsData, error: clientsError } = await clientsQuery;
+      if (clientsError || !clientsData) {
+        console.error('Error loading clients stats:', clientsError);
         return;
       }
 
-      document.getElementById('totalClients').textContent = data.length;
-      document.getElementById('newClients').textContent = data.filter(c => c.status === 'New').length;
-      document.getElementById('referredClients').textContent = data.filter(c => c.status === 'Referred client').length;
-      document.getElementById('convertedClients').textContent = data.filter(c => c.status === 'Converted').length;
+      let quotesQuery = supabaseClient.from('quotes').select('grand_total, created_by, status');
+      if (!isAdmin) {
+        quotesQuery = quotesQuery.eq('created_by', currentUserId);
+      }
+
+      const { data: quotesData, error: quotesError } = await quotesQuery;
+      if (quotesError) {
+        console.error('Error loading quote stats:', quotesError);
+        return;
+      }
+
+      const clients = clientsData || [];
+      const quotes = quotesData || [];
+      const totalRevenue = quotes.reduce((sum, quote) => sum + (Number(quote.grand_total) || 0), 0);
+      const teamCount = isAdmin
+        ? (await supabaseClient.from('profiles').select('id').eq('Roles', 'Employee / Worker')).data?.length || 0
+        : 0;
+
+      renderStatsCards({
+        clients: clients.length,
+        quotes: quotes.length,
+        revenue: totalRevenue,
+        teamPerformance: teamCount
+      });
+    }
+
+    function renderStatsCards(stats) {
+      const grid = document.getElementById('statsGrid');
+      if (!grid) return;
+
+      const cards = isAdminLevel(currentRole)
+        ? [
+            { icon: '👥', value: stats.clients, label: 'All Clients' },
+            { icon: '🧾', value: stats.quotes, label: 'All Quotes' },
+            { icon: '💰', value: formatCurrency(stats.revenue), label: 'Total Revenue' },
+            { icon: '📈', value: stats.teamPerformance, label: 'Team Performance' }
+          ]
+        : [
+            { icon: '👥', value: stats.clients, label: 'My Clients' },
+            { icon: '🧾', value: stats.quotes, label: 'My Quotes' },
+            { icon: '💰', value: formatCurrency(stats.revenue), label: 'My Total Sales' }
+          ];
+
+      grid.innerHTML = cards.map(card => `
+        <div class="stat-card">
+          <div class="stat-icon">${card.icon}</div>
+          <div class="stat-num">${card.value}</div>
+          <div class="stat-label">${card.label}</div>
+        </div>
+      `).join('');
     }
 
     async function loadRecentClients() {
-      const { data } = await supabaseClient
+      let query = supabaseClient
         .from('clients')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(5);
 
+      if (!isAdminLevel(currentRole)) {
+        query = query.eq('created_by', currentUserId);
+      }
+
+      const { data } = await query;
+
       const tbody = document.getElementById('recentTable');
-      const isAdmin = currentRole === 'admin' || currentRole === 'superadmin';
+      const isAdmin = isAdminLevel(currentRole);
       const colSpan = isAdmin ? 5 : 4;
 
       if (!data || data.length === 0) {
@@ -390,8 +422,13 @@
       t.className = `toast toast-${type} show`;
       setTimeout(() => t.classList.remove('show'), 3500);
     }
-      function roleLabel(r) {
-      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-AE', {
+        style: 'currency',
+        currency: 'AED',
+        maximumFractionDigits: 0
+      }).format(Number(value) || 0);
     }
 
     function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }
