@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A-M Travel CRM — Invoice Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/crm.css"/>
+  <link rel="stylesheet" href="../assets/logos.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    /* ── INVOICE SPECIFIC STYLES ── */
+    .currency-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .currency-btn {
+      padding: 8px 20px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .currency-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      background: rgba(37,99,235,0.05);
+    }
+
+    .invoice-preview {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-top: 24px;
+    }
+
+    .invoice-header {
+      background: linear-gradient(135deg, #023E8A 0%, #0096C7 100%);
+      color: white;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .invoice-company {
+      flex: 1;
+    }
+
+    .invoice-company-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .invoice-company-info {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      opacity: 0.95;
+    }
+
+    .invoice-number-box {
+      text-align: right;
+      background: rgba(255,255,255,0.1);
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    .invoice-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .invoice-date {
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .invoice-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .invoice-details-section h3 {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .invoice-details-content {
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+
+    .invoice-table-wrapper {
+      margin-bottom: 32px;
+    }
+
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    .invoice-table th {
+      background: rgba(37,99,235,0.1);
+      color: var(--text);
+      padding: 12px;
+      text-align: left;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .invoice-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    .invoice-table tr:hover {
+      background: rgba(37,99,235,0.05);
+    }
+
+    .invoice-summary {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 32px;
+    }
+
+    .invoice-summary-box {
+      background: rgba(37,99,235,0.05);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+    }
+
+    .summary-row.total {
+      background: #023E8A;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .invoice-footer {
+      background: rgba(2, 62, 138, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0063A0;
+      transform: translateY(-2px);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+      transform: translateY(-2px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      z-index: 100;
+      animation: slideIn 0.3s ease forwards;
+    }
+
+    .toast.success {
+      background: var(--success);
+      color: white;
+    }
+
+    .toast.error {
+      background: var(--error);
+      color: white;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .no-data {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 20px;
+    }
+
+    .access-denied {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      text-align: center;
+      flex-direction: column;
+    }
+
+    .access-denied h2 {
+      color: var(--error);
+      margin-bottom: 16px;
+    }
+
+    .access-denied a {
+      color: var(--accent);
+      text-decoration: none;
+      margin-top: 16px;
+    }
+
+    .access-denied a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo-container">
+      <img src="../assets/images/am-logomark.png" alt="A-M Travel Logo" class="logo-image">
+      <div class="sidebar-logo">A-M <span>Travel</span></div>
+    </div>
+    <div class="sidebar-role" id="sidebarRole">Loading...</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+      <a href="clients.html" class="nav-item">👥 Clients</a>
+      <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
+      <a href="invoice.html" class="nav-item active" style="display:none">🧾 Invoice</a>
+      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
+      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
+    </nav>
+    <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">🧾 Invoice Generator</h1>
+        <p class="page-sub">Create and manage invoices from quotes</p>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div class="currency-toggle">
+          <button class="currency-btn active" id="btnAED" onclick="setCurrency('AED')">AED</button>
+          <button class="currency-btn" id="btnPHP" onclick="setCurrency('PHP')">PHP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCESS DENIED MESSAGE -->
+    <div id="accessDeniedContainer" style="display:none;">
+      <div class="card">
+        <div class="access-denied">
+          <h2>🔒 Access Denied</h2>
+          <p>Only Admin and Super Admin users can access the Invoice Generator.</p>
+          <a href="dashboard.html">← Back to Dashboard</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVOICE CONTENT (visible only to admins) -->
+    <div id="invoiceContent" style="display:none;">
+      <!-- SELECT QUOTE -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">1️⃣ Select Quote</h2>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Quote Reference *</label>
+            <select id="quoteSelect" onchange="loadQuoteData()">
+              <option value="">-- Select a Quote --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Search by Client Name</label>
+            <input type="text" id="clientSearch" placeholder="Filter quotes by client name..." onkeyup="filterQuotes()"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVOICE DETAILS -->
+      <div class="card" id="invoiceDetailsCard" style="display:none;">
+        <div class="card-header">
+          <h2 class="card-title">2️⃣ Invoice Details</h2>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Invoice Number (Auto-generated)</label>
+            <input type="text" id="invoiceNumber" readonly style="background:rgba(255,255,255,0.02);"/>
+          </div>
+          <div class="form-group">
+            <label>Issue Date</label>
+            <input type="date" id="issueDate" readonly/>
+          </div>
+          <div class="form-group">
+            <label>Due Date</label>
+            <input type="date" id="dueDate"/>
+          </div>
+          <div class="form-group">
+            <label>Travel Date</label>
+            <input type="text" id="travelDate" readonly/>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVOICE PREVIEW -->
+      <div class="invoice-preview" id="invoicePreview" style="display:none;">
+        <!-- Header -->
+        <div class="invoice-header">
+          <div class="invoice-company">
+            <div class="invoice-company-name">AM TRAVEL & TOURS</div>
+            <div class="invoice-company-info">
+              <div>Est. 2026  |  Dubai, UAE</div>
+              <div>📞 +971 56 471 8805</div>
+              <div>📧 amtravelandtours@gmail.com</div>
+            </div>
+          </div>
+          <div class="invoice-number-box">
+            <div class="invoice-number" id="previewInvNum">INV-20250707-0001</div>
+            <div class="invoice-date">
+              <div>Issued: <span id="previewIssueDate">2025-07-07</span></div>
+              <div>Due: <span id="previewDueDate">2025-07-14</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Client & Details -->
+        <div class="invoice-details">
+          <div class="invoice-details-section">
+            <h3>Bill To</h3>
+            <div class="invoice-details-content">
+              <div id="previewClientName">Client Name</div>
+              <div id="previewTravelDate" style="margin-top:12px;color:var(--muted);font-size:0.85rem;">Travel Date: —</div>
+            </div>
+          </div>
+          <div class="invoice-details-section">
+            <h3>Currency</h3>
+            <div class="invoice-details-content" id="previewCurrency">AED</div>
+          </div>
+        </div>
+
+        <!-- Line Items Table -->
+        <div class="invoice-table-wrapper">
+          <table class="invoice-table">
+            <thead>
+              <tr>
+                <th>Item Type</th>
+                <th>Description</th>
+                <th>Cost</th>
+                <th>Margin %</th>
+                <th>Upsell</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="invoiceTableBody">
+              <tr><td colspan="6" class="no-data">No items</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Summary -->
+        <div class="invoice-summary">
+          <div class="invoice-summary-box">
+            <div class="summary-row">
+              <span>Subtotal Cost:</span>
+              <span id="summarySubtotal">0.00</span>
+            </div>
+            <div class="summary-row">
+              <span>Total Margin:</span>
+              <span style="color:var(--success);" id="summaryMargin">0.00</span>
+            </div>
+            <div class="summary-row">
+              <span>Total Upsell:</span>
+              <span id="summaryUpsell">0.00</span>
+            </div>
+            <div class="summary-row">
+              <span>Discount:</span>
+              <span style="color:var(--error);" id="summaryDiscount">0.00</span>
+            </div>
+            <div class="summary-row total">
+              <span>GRAND TOTAL:</span>
+              <span id="summaryGrandTotal">0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+          <div><strong>Payment Terms & Validity:</strong></div>
+          <div style="margin-top:8px;">This invoice is valid for 7 days from the date of issue. Prices are subject to availability and confirmation.</div>
+          <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+            AM Travel & Tours  |  Dubai, UAE  |  +971 56 471 8805
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="btn-row" id="actionButtons" style="display:none;">
+        <button class="btn btn-ghost" onclick="resetForm()">🔄 Clear</button>
+        <button class="btn btn-success" onclick="generateInvoicePDF()">📄 Download PDF</button>
+        <button class="btn btn-primary" onclick="saveInvoice()">💾 Save Invoice</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentRole = '';
+    let currentUser = null;
+    let currentCurrency = 'AED';
+    let allQuotes = [];
+    let selectedQuote = null;
+
+    // ── INITIALIZATION ──
+    window.addEventListener('load', async () => {
+      const user = await requireAuth();
+      if (!user) return;
+
+      currentUser = user;
+      const profile = await getProfile(user.id);
+      currentRole = profile.role;
+
+      // Update sidebar
+      document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
+      document.getElementById('sidebarRole').className = `sidebar-role role-pill role-${roleClass(currentRole)}`;
+
+      // Check access control
+      if (!canAccessInvoices(currentRole)) {
+        document.getElementById('accessDeniedContainer').style.display = '';
+        document.getElementById('invoiceContent').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('invoiceContent').style.display = '';
+      document.getElementById('accessDeniedContainer').style.display = 'none';
+
+      applyRoleUI(currentRole);
+      setTodayDate();
+      loadQuotes();
+    });
+
+    // ── ACCESS CONTROL ──
+    function canAccessInvoices(role) {
+      return [ROLES.SUPER_ADMIN, ROLES.ADMIN].includes(role);
+    }
+
+    // ── SET TODAY'S DATE ──
+    function setTodayDate() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('issueDate').value = today;
+      document.getElementById('dueDate').value = getDateAfterDays(7);
+      generateInvoiceNumber();
+    }
+
+    // ── GENERATE INVOICE NUMBER ──
+    function generateInvoiceNumber() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const random = Math.floor(Math.random() * 9000 + 1000);
+      const invNum = `INV-${year}${month}${day}-${random}`;
+      document.getElementById('invoiceNumber').value = invNum;
+      return invNum;
+    }
+
+    // ── GET DATE AFTER DAYS ──
+    function getDateAfterDays(days) {
+      const date = new Date();
+      date.setDate(date.getDate() + days);
+      return date.toISOString().split('T')[0];
+    }
+
+    // ── CURRENCY ──
+    function setCurrency(currency) {
+      currentCurrency = currency;
+      document.getElementById('btnAED').classList.toggle('active', currency === 'AED');
+      document.getElementById('btnPHP').classList.toggle('active', currency === 'PHP');
+      document.getElementById('previewCurrency').textContent = currency;
+      if (selectedQuote) {
+        renderInvoicePreview();
+      }
+    }
+
+    // ── LOAD QUOTES ──
+    async function loadQuotes() {
+      const { data } = await supabaseClient
+        .from('quotes')
+        .select('id, ref, client_name, grand_total, travel_date')
+        .order('created_at', { ascending: false });
+
+      allQuotes = data || [];
+      populateQuoteSelect();
+    }
+
+    // ── POPULATE QUOTE SELECT ──
+    function populateQuoteSelect() {
+      const select = document.getElementById('quoteSelect');
+      select.innerHTML = '<option value="">-- Select a Quote --</option>';
+      allQuotes.forEach(quote => {
+        const opt = document.createElement('option');
+        opt.value = quote.id;
+        opt.textContent = `${quote.ref} - ${quote.client_name}`;
+        select.appendChild(opt);
+      });
+    }
+
+    // ── FILTER QUOTES ──
+    function filterQuotes() {
+      const searchTerm = document.getElementById('clientSearch').value.toLowerCase();
+      const select = document.getElementById('quoteSelect');
+      select.innerHTML = '<option value="">-- Select a Quote --</option>';
+
+      allQuotes
+        .filter(q => q.client_name.toLowerCase().includes(searchTerm) || q.ref.toLowerCase().includes(searchTerm))
+        .forEach(quote => {
+          const opt = document.createElement('option');
+          opt.value = quote.id;
+          opt.textContent = `${quote.ref} - ${quote.client_name}`;
+          select.appendChild(opt);
+        });
+    }
+
+    // ── LOAD QUOTE DATA ──
+    async function loadQuoteData() {
+      const quoteId = document.getElementById('quoteSelect').value;
+      if (!quoteId) {
+        document.getElementById('invoiceDetailsCard').style.display = 'none';
+        document.getElementById('invoicePreview').style.display = 'none';
+        document.getElementById('actionButtons').style.display = 'none';
+        return;
+      }
+
+      const { data } = await supabaseClient
+        .from('quotes')
+        .select('*')
+        .eq('id', quoteId)
+        .single();
+
+      if (!data) {
+        showToast('Error loading quote', 'error');
+        return;
+      }
+
+      selectedQuote = data;
+      document.getElementById('invoiceDetailsCard').style.display = '';
+      document.getElementById('travelDate').value = data.travel_date || '—';
+      renderInvoicePreview();
+      document.getElementById('invoicePreview').style.display = '';
+      document.getElementById('actionButtons').style.display = 'flex';
+    }
+
+    // ── RENDER INVOICE PREVIEW ──
+    function renderInvoicePreview() {
+      if (!selectedQuote) return;
+
+      const invNum = document.getElementById('invoiceNumber').value;
+      const issueDate = document.getElementById('issueDate').value;
+      const dueDate = document.getElementById('dueDate').value;
+
+      document.getElementById('previewInvNum').textContent = invNum;
+      document.getElementById('previewIssueDate').textContent = issueDate;
+      document.getElementById('previewDueDate').textContent = dueDate;
+      document.getElementById('previewClientName').textContent = selectedQuote.client_name;
+      document.getElementById('previewTravelDate').textContent = `Travel Date: ${selectedQuote.travel_date || '—'}`;
+
+      const items = JSON.parse(selectedQuote.items || '[]');
+      const tbody = document.getElementById('invoiceTableBody');
+
+      if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No items</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map(item => `
+        <tr>
+          <td>${item.type || '—'}</td>
+          <td>${item.desc || '—'}</td>
+          <td>${formatMoney(item.cost)} ${currentCurrency}</td>
+          <td>${item.margin}%</td>
+          <td>${formatMoney(item.upsell)} ${currentCurrency}</td>
+          <td>${formatMoney(item.total)} ${currentCurrency}</td>
+        </tr>
+      `).join('');
+
+      // Update summary
+      document.getElementById('summarySubtotal').textContent = formatMoney(selectedQuote.total_cost);
+      document.getElementById('summaryMargin').textContent = formatMoney(selectedQuote.total_margin);
+      document.getElementById('summaryUpsell').textContent = formatMoney(selectedQuote.total_upsell);
+      document.getElementById('summaryDiscount').textContent = formatMoney(selectedQuote.discount);
+      document.getElementById('summaryGrandTotal').textContent = formatMoney(selectedQuote.grand_total);
+    }
+
+    // ── FORMAT MONEY ──
+    function formatMoney(amount) {
+      return Number(amount || 0).toFixed(2);
+    }
+
+    // ── GENERATE PDF ──
+    function generateInvoicePDF() {
+      if (!selectedQuote) {
+        showToast('Please select a quote first', 'error');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+
+      // ── HEADER BACKGROUND ──
+      doc.setFillColor(2, 62, 138); // #023E8A
+      doc.rect(0, 0, pageW, 45, 'F');
+
+      // ── COMPANY NAME ──
+      doc.setTextColor(244, 244, 244);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.text('AM TRAVEL & TOURS', 14, 15);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(200, 220, 255);
+      doc.text('Est. 2026  |  Dubai, UAE  |  +971 56 471 8805', 14, 23);
+      doc.text('amtravelandtours@gmail.com  |  amtravel.ph', 14, 29);
+
+      // ── INVOICE LABEL ──
+      doc.setFillColor(0, 150, 199); // #0096C7
+      doc.rect(pageW - 55, 5, 45, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('INVOICE', pageW - 47, 15);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      const invNum = document.getElementById('invoiceNumber').value;
+      doc.text(invNum, pageW - 47, 22);
+      doc.text(new Date().toLocaleDateString(), pageW - 47, 29);
+
+      // ── CLIENT & INVOICE INFO ──
+      doc.setTextColor(30, 30, 30);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('BILL TO:', 14, 58);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      doc.text(selectedQuote.client_name, 14, 65);
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Travel Date: ${selectedQuote.travel_date || '—'}`, 14, 72);
+      doc.text(`Currency: ${currentCurrency}`, 14, 78);
+      
+      const issueDate = document.getElementById('issueDate').value;
+      const dueDate = document.getElementById('dueDate').value;
+      doc.text(`Issue Date: ${issueDate}`, pageW - 80, 72);
+      doc.text(`Due Date: ${dueDate}`, pageW - 80, 78);
+
+      // ── LINE ITEMS TABLE ──
+      const items = JSON.parse(selectedQuote.items || '[]');
+      doc.autoTable({
+        startY: 88,
+        head: [['Type', 'Description', `Cost (${currentCurrency})`, 'Margin %', `Upsell (${currentCurrency})`, `Total (${currentCurrency})`]],
+        body: items.map(i => [
+          i.type || '—',
+          i.desc || '—',
+          formatMoney(i.cost),
+          `${i.margin}%`,
+          formatMoney(i.upsell),
+          formatMoney(i.total)
+        ]),
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: [2, 62, 138], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 248, 255] },
+        columnStyles: { 0: { cellWidth: 28 }, 1: { cellWidth: 55 }, 2: { cellWidth: 25 }, 3: { cellWidth: 20 }, 4: { cellWidth: 25 }, 5: { cellWidth: 25 } }
+      });
+
+      const finalY = doc.lastAutoTable.finalY + 8;
+
+      // ── SUMMARY BOX ──
+      doc.setFillColor(245, 248, 255);
+      doc.roundedRect(pageW - 90, finalY, 76, 52, 3, 3, 'F');
+      doc.setDrawColor(2, 62, 138);
+      doc.roundedRect(pageW - 90, finalY, 76, 52, 3, 3, 'S');
+
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      const sx = pageW - 86;
+      doc.text('Subtotal Cost:', sx, finalY + 9);
+      doc.text('Total Margin:', sx, finalY + 17);
+      doc.text('Total Upsell:', sx, finalY + 25);
+      doc.text('Discount:', sx, finalY + 33);
+
+      doc.setTextColor(30, 30, 30);
+      doc.text(`${formatMoney(selectedQuote.total_cost)} ${currentCurrency}`, pageW - 16, finalY + 9, { align: 'right' });
+      doc.setTextColor(22, 163, 74);
+      doc.text(`${formatMoney(selectedQuote.total_margin)} ${currentCurrency}`, pageW - 16, finalY + 17, { align: 'right' });
+      doc.setTextColor(30, 30, 30);
+      doc.text(`${formatMoney(selectedQuote.total_upsell)} ${currentCurrency}`, pageW - 16, finalY + 25, { align: 'right' });
+      doc.setTextColor(220, 38, 38);
+      doc.text(`-${formatMoney(selectedQuote.discount)} ${currentCurrency}`, pageW - 16, finalY + 33, { align: 'right' });
+
+      // Total line
+      doc.setFillColor(2, 62, 138);
+      doc.rect(pageW - 90, finalY + 38, 76, 14, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('TOTAL:', sx, finalY + 47);
+      doc.text(`${formatMoney(selectedQuote.grand_total)} ${currentCurrency}`, pageW - 16, finalY + 47, { align: 'right' });
+
+      // ── FOOTER ──
+      const footerY = doc.internal.pageSize.getHeight() - 20;
+      doc.setFillColor(2, 62, 138);
+      doc.rect(0, footerY - 4, pageW, 24, 'F');
+      doc.setTextColor(200, 220, 255);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.text('This invoice is valid for 7 days from the date of issue. Prices are subject to availability and confirmation.', pageW / 2, footerY + 2, { align: 'center' });
+      doc.text('AM Travel & Tours  |  Dubai, UAE  |  +971 56 471 8805', pageW / 2, footerY + 8, { align: 'center' });
+
+      doc.save(`${invNum}.pdf`);
+      showToast('PDF generated successfully', 'success');
+    }
+
+    // ── SAVE INVOICE ──
+    async function saveInvoice() {
+      if (!selectedQuote) {
+        showToast('Please select a quote first', 'error');
+        return;
+      }
+
+      const invNum = document.getElementById('invoiceNumber').value;
+      const issueDate = document.getElementById('issueDate').value;
+      const dueDate = document.getElementById('dueDate').value;
+
+      const invoiceData = {
+        invoice_number: invNum,
+        quote_id: selectedQuote.id,
+        client_name: selectedQuote.client_name,
+        client_id: selectedQuote.client_id,
+        issue_date: issueDate,
+        due_date: dueDate,
+        travel_date: selectedQuote.travel_date,
+        currency: currentCurrency,
+        items: selectedQuote.items,
+        total_cost: selectedQuote.total_cost,
+        total_margin: selectedQuote.total_margin,
+        total_upsell: selectedQuote.total_upsell,
+        discount: selectedQuote.discount,
+        grand_total: selectedQuote.grand_total,
+        created_by: currentUser.id,
+        status: 'Draft'
+      };
+
+      const { data, error } = await supabaseClient
+        .from('invoices')
+        .insert([invoiceData]);
+
+      if (error) {
+        showToast(`Error saving invoice: ${error.message}`, 'error');
+        return;
+      }
+
+      showToast('Invoice saved successfully!', 'success');
+      generateInvoicePDF();
+      resetForm();
+    }
+
+    // ── RESET FORM ──
+    function resetForm() {
+      document.getElementById('quoteSelect').value = '';
+      document.getElementById('clientSearch').value = '';
+      document.getElementById('invoiceDetailsCard').style.display = 'none';
+      document.getElementById('invoicePreview').style.display = 'none';
+      document.getElementById('actionButtons').style.display = 'none';
+      selectedQuote = null;
+      setTodayDate();
+    }
+
+    // ── SHOW TOAST ──
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      setTimeout(() => {
+        toast.className = '';
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

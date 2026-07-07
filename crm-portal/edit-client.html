@@ -19,6 +19,8 @@
       <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
       <a href="clients.html" class="nav-item">👥 Clients</a>
       <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
+      <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
       <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
       <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
       <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
@@ -121,9 +123,9 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="js/config.js" defer></script>
-  <script src="js/auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
   <script>
     let currentUser = null;
     let clientId = null;

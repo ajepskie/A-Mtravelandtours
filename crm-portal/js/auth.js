@@ -39,6 +39,11 @@ function canManageUsers(role) {
   return role === ROLES.SUPER_ADMIN;
 }
 
+// ── Check if role can access invoices
+function canAccessInvoices(role) {
+  return [ROLES.SUPER_ADMIN, ROLES.ADMIN].includes(role);
+}
+
 // ── Role display label
 function roleLabel(role) {
   const labels = {
