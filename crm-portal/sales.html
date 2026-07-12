@@ -224,12 +224,12 @@
     <div class="sidebar-role" id="sidebarRole">Loading...</div>
     <nav class="sidebar-nav">
       <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
-      <a href="clients.html" class="nav-item">👥 Clients</a>
-      <a href="add-client.html" class="nav-item">➕ Add Client</a>
-      <a href="sales.html" class="nav-item active">💰 Sales & Quotes</a>
+      <a href="clients.html" class="nav-item clients-only">👥 Clients</a>
+      <a href="add-client.html" class="nav-item add-client-only">➕ Add Client</a>
+      <a href="sales.html" class="nav-item active sales-only">💰 Sales & Quotes</a>
       <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
-      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
-      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="worker-performance.html" class="nav-item workers-only" style="display:none">📈 Workers</a>
+      <a href="backup.html" class="nav-item backup-only" style="display:none">💾 Backup</a>
       <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
     </nav>
     <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
@@ -450,13 +450,7 @@
       currentRole = profile.role;
 
       document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
-
-      if (currentRole === 'admin' || currentRole === 'superadmin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-      }
-      if (currentRole === 'superadmin') {
-        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
-      }
+      applyRoleUI(currentRole);
 
       generateRef();
       loadClients();
@@ -483,8 +477,15 @@
 
     // ── LOAD CLIENTS ──
     async function loadClients() {
-      const { data } = await supabaseClient.from('clients').select('id, full_name').order('full_name');
       const select = document.getElementById('quoteClient');
+      select.innerHTML = '<option value="">Choose existing client...</option>';
+
+      let query = supabaseClient.from('clients').select('id, full_name').order('full_name');
+      if (!isAdminLevel(currentRole)) {
+        query = query.eq('created_by', currentUser.id);
+      }
+
+      const { data } = await query;
       if (data) {
         data.forEach(c => {
           const opt = document.createElement('option');
@@ -702,11 +703,16 @@
 
     // ── LOAD QUOTES ──
     async function loadQuotes() {
-      const { data } = await supabaseClient
+      let query = supabaseClient
         .from('quotes')
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (!isAdminLevel(currentRole)) {
+        query = query.eq('created_by', currentUser.id);
+      }
+
+      const { data } = await query;
       allQuotes = data || [];
       renderQuotes(allQuotes);
 
@@ -961,7 +967,14 @@
     function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }
 
     function roleLabel(r) {
-      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
+      const normalized = normalizeRole(r);
+      return {
+        [ROLES.SUPER_ADMIN]: '👑 Super Admin',
+        [ROLES.ADMIN]: '🔧 Admin',
+        [ROLES.ACCOUNTS]: '💼 Accounts',
+        [ROLES.WORKER]: '👷 Worker',
+        [ROLES.TESTER]: '🧪 Tester'
+      }[normalized] || normalized;
     }
 
     function showToast(msg, type = 'success') {

@@ -133,13 +133,9 @@
       const user = await requireAuth();
       currentUser = user;
       const profile = await getProfile(user.id);
-      document.getElementById('sidebarRole').textContent = roleLabel(profile.role);
-      if (profile.role === 'admin' || profile.role === 'superadmin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-      }
-      if (profile.role === 'superadmin') {
-        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
-      }
+      const role = profile.role;
+      document.getElementById('sidebarRole').textContent = roleLabel(role);
+      applyRoleUI(role);
 
       // Auto-set today's date for registered_date
       const today = new Date().toISOString().split('T')[0];
@@ -170,7 +166,7 @@
         const fileName = `${Date.now()}_${file.name}`;
         const { data: uploadData, error: uploadError } = await supabaseClient
           .storage
-          .from('Client Document)
+          .from('client-documents')
           .upload(fileName, file);
 
         if (uploadError) {

@@ -179,30 +179,17 @@
       <button class="btn-login" id="loginBtn" onclick="handleLogin()">Sign In</button>
       <div class="error-msg" id="errorMsg"></div>
       <div class="login-footer">
-        New employee? <a href="#" onclick="switchToRegister(event)" style="color:var(--accent);text-decoration:none;font-weight:500;">Create Account</a>
+        New employee? <a href="register.html" style="color:var(--accent);text-decoration:none;font-weight:500;">Create Account</a>
       </div>
     </div>
 
-    <!-- REGISTER TAB -->
     <div id="registerTab" style="display:none;">
       <div class="form-group">
-        <label>Full Name</label>
-        <input type="text" id="reg_name" placeholder="Your Full Name"/>
+        <p style="color: var(--muted); line-height: 1.6; font-size: 0.92rem;">
+          New team members can register here. Accounts are reviewed by an admin before access is granted.
+        </p>
       </div>
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="reg_email" placeholder="you@amtravel.com"/>
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="reg_password" placeholder="••••••••" minlength="6"/>
-      </div>
-      <div class="form-group">
-        <label>Confirm Password</label>
-        <input type="password" id="reg_password_confirm" placeholder="••••••••"/>
-      </div>
-      <button class="btn-login" id="registerBtn" onclick="handleRegister()">Create Account</button>
-      <div class="error-msg" id="registerErrorMsg"></div>
+      <a class="btn-login" href="register.html" style="display:inline-block; text-align:center; text-decoration:none;">Create Account</a>
       <div class="login-footer">
         Already have an account? <a href="#" onclick="switchToLogin(event)" style="color:var(--accent);text-decoration:none;font-weight:500;">Sign In</a>
       </div>
@@ -213,11 +200,9 @@
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
   <script>
-    // Tab switching
     function switchToRegister(e) {
       e.preventDefault();
-      document.getElementById('loginTab').style.display = 'none';
-      document.getElementById('registerTab').style.display = 'block';
+      window.location.href = 'register.html';
     }
 
     function switchToLogin(e) {
@@ -230,12 +215,7 @@
     function clearForms() {
       document.getElementById('email').value = '';
       document.getElementById('password').value = '';
-      document.getElementById('reg_name').value = '';
-      document.getElementById('reg_email').value = '';
-      document.getElementById('reg_password').value = '';
-      document.getElementById('reg_password_confirm').value = '';
       document.getElementById('errorMsg').classList.remove('show');
-      document.getElementById('registerErrorMsg').classList.remove('show');
     }
 
     async function handleLogin() {
@@ -253,95 +233,50 @@
       btn.textContent = 'Signing in...';
       err.classList.remove('show');
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-      if (error) {
+      if (signInError) {
         showError('Invalid email or password. Please try again.', 'errorMsg');
         btn.disabled = false;
         btn.textContent = 'Sign In';
         return;
       }
 
-      window.location.href = 'dashboard.html';
-    }
-
-    async function handleRegister() {
-      const name = document.getElementById('reg_name').value.trim();
-      const email = document.getElementById('reg_email').value.trim();
-      const password = document.getElementById('reg_password').value;
-      const confirmPassword = document.getElementById('reg_password_confirm').value;
-      const btn = document.getElementById('registerBtn');
-      const err = document.getElementById('registerErrorMsg');
-
-      if (!name || !email || !password || !confirmPassword) {
-        showError('Please fill in all fields.', 'registerErrorMsg');
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        showError('Passwords do not match.', 'registerErrorMsg');
-        return;
-      }
-
-      if (password.length < 6) {
-        showError('Password must be at least 6 characters.', 'registerErrorMsg');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Creating account...';
-      err.classList.remove('show');
-
-      // Sign up
-      const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: name }
-        }
-      });
-
-      if (signUpError) {
-        showError('Registration error: ' + signUpError.message, 'registerErrorMsg');
+      const userId = signInData?.user?.id;
+      if (!userId) {
+        showError('Login failed. Please try again.', 'errorMsg');
         btn.disabled = false;
-        btn.textContent = 'Create Account';
+        btn.textContent = 'Sign In';
         return;
       }
 
-      if (!signUpData.user) {
-        showError('Registration failed. Please try again.', 'registerErrorMsg');
-        btn.disabled = false;
-        btn.textContent = 'Create Account';
-        return;
-      }
-
-      // Create profile with 'worker' role (can create, edit, but not delete)
-      const { error: profileError } = await supabaseClient
+      const { data: profileData, error: profileError } = await supabaseClient
         .from('profiles')
-        .insert([{
-          id: signUpData.user.id,
-          email,
-          full_name: name,
-          role: 'worker'  // New employees are 'worker' role
-        }]);
+        .select('status')
+        .eq('id', userId)
+        .maybeSingle();
 
       if (profileError) {
-        showError('Account created but profile setup failed.', 'registerErrorMsg');
+        showError('Unable to verify your account status right now.', 'errorMsg');
         btn.disabled = false;
-        btn.textContent = 'Create Account';
+        btn.textContent = 'Sign In';
         return;
       }
 
-      showError('✅ Account created! Please sign in with your credentials.', 'registerErrorMsg');
-      err.style.background = 'rgba(34,197,94,0.1)';
-      err.style.borderColor = 'rgba(34,197,94,0.2)';
-      err.style.color = '#22c55e';
+      const status = (profileData?.status || 'Pending').toLowerCase();
+      if (status === 'pending') {
+        showError('Your account is pending approval', 'errorMsg');
+      } else if (status === 'rejected') {
+        showError('Your account has been rejected', 'errorMsg');
+      } else if (status === 'approved') {
+        window.location.href = 'dashboard.html';
+        return;
+      } else {
+        showError('Your account is pending approval', 'errorMsg');
+      }
 
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = 'Create Account';
-        switchToLogin({ preventDefault: () => {} });
-      }, 2000);
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
     }
 
     function showError(msg, elementId) {
@@ -356,16 +291,11 @@
     }
 
     document.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        if (document.getElementById('loginTab').style.display !== 'none') {
-          handleLogin();
-        } else {
-          handleRegister();
-        }
+      if (e.key === 'Enter' && document.getElementById('loginTab').style.display !== 'none') {
+        handleLogin();
       }
     });
 
-    // Redirect if already logged in
     window.addEventListener('load', async () => {
       const { data } = await supabaseClient.auth.getSession();
       if (data.session) window.location.href = 'dashboard.html';

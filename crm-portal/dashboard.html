@@ -4,9 +4,219 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>A-M Travel CRM — Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/crm.css"/>
   <link rel="stylesheet" href="../assets/logos.css"/>
+  <style>
+    :root {
+      --bg: #07111f;
+      --surface: #101a2e;
+      --surface-2: #16233b;
+      --text: #f5f7fb;
+      --muted: #8ba0bf;
+      --border: rgba(255,255,255,0.08);
+      --accent: #5d8cff;
+      --accent-soft: rgba(93,140,255,0.16);
+      --success: #31c48d;
+      --warning: #f59e0b;
+    }
+
+    html { font-size: 13px; }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text);
+      background: linear-gradient(180deg, #07111f 0%, #0b1425 100%);
+    }
+
+    .main-content {
+      padding: 24px 26px 36px;
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 1.38rem;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+
+    .page-sub {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .dashboard-hero {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, rgba(93,140,255,0.22), rgba(255,255,255,0.03));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 20px;
+      box-shadow: 0 8px 30px rgba(2,8,23,0.18);
+    }
+
+    .hero-card h2 {
+      margin: 4px 0 6px;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .hero-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #9cb6ff;
+      margin: 0 0 4px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 15px;
+      min-height: 104px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .stat-card .stat-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .stat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      font-size: 0.95rem;
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .dashboard-section {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 18px;
+      margin-top: 8px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 16px 12px;
+      box-shadow: 0 8px 24px rgba(2,8,23,0.16);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th,
+    .data-table td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.9rem;
+    }
+
+    .data-table th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .data-table td a { color: #dce9ff; text-decoration: none; }
+
+    .btn-link {
+      color: #9cb6ff;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .status-approved { background: rgba(49,196,141,0.16); color: #7fe2b2; }
+    .status-pending { background: rgba(245,158,11,0.16); color: #f7c96e; }
+    .status-rejected { background: rgba(248,113,113,0.16); color: #fda4af; }
+    .status-draft { background: rgba(93,140,255,0.16); color: #9cb6ff; }
+
+    .sidebar-role { font-size: 0.9rem; }
+
+    @media (max-width: 980px) {
+      .dashboard-section { grid-template-columns: 1fr; }
+      .main-content { padding: 18px 16px 28px; }
+    }
+  </style>
 </head>
 <body>
   <!-- SIDEBAR -->
@@ -18,12 +228,12 @@
     <div class="sidebar-role" id="sidebarRole">Loading...</div>
     <nav class="sidebar-nav">
       <a href="dashboard.html" class="nav-item active">📊 Dashboard</a>
-      <a href="clients.html" class="nav-item">👥 Clients</a>
-      <a href="add-client.html" class="nav-item">➕ Add Client</a>
-      <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
+      <a href="clients.html" class="nav-item clients-only">👥 Clients</a>
+      <a href="add-client.html" class="nav-item add-client-only">➕ Add Client</a>
+      <a href="sales.html" class="nav-item sales-only">💰 Sales & Quotes</a>
       <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
-      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
-      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="worker-performance.html" class="nav-item workers-only" style="display:none">📈 Workers</a>
+      <a href="backup.html" class="nav-item backup-only" style="display:none">💾 Backup</a>
       <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
     </nav>
     <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
@@ -41,70 +251,67 @@
       </div>
     </div>
 
-    <!-- WORKER OVERVIEW (Admin & SuperAdmin) -->
-    <div class="card admin-only" id="workerStatsCard" style="display:none">
-      <div class="card-header">
-        <h2 class="card-title">👷 Worker Performance</h2>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">👥</div>
-          <div class="stat-num" id="totalWorkers">—</div>
-          <div class="stat-label">Active Workers</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">📊</div>
-          <div class="stat-num" id="workerClientsCreated">—</div>
-          <div class="stat-label">Clients Created</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">✅</div>
-          <div class="stat-num" id="workerClientsConverted">—</div>
-          <div class="stat-label">Conversions</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">📈</div>
-          <div class="stat-num" id="conversionRate">—%</div>
-          <div class="stat-label">Conversion Rate</div>
-        </div>
+    <div class="dashboard-hero">
+      <div class="hero-card">
+        <p class="eyebrow">Overview</p>
+        <h2 id="heroTitle">Your activity snapshot</h2>
+        <p id="heroSubtitle">A concise view of your recent work and team progress.</p>
       </div>
     </div>
 
-    <!-- STATS -->
-    <div>
-      <h2 style="margin-bottom:20px;color:var(--text);font-size:1.2rem;font-weight:600;">� Dashboard Summary</h2>
-    </div>
     <div class="stats-grid" id="statsGrid"></div>
 
-    <!-- RECENT CLIENTS -->
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Recent Clients</h2>
-        <a href="clients.html" class="btn-link">View All →</a>
+    <div class="dashboard-section">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title" id="recentClientsTitle">Recent Clients</h2>
+          <a href="clients.html" class="btn-link">View All</a>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Nationality</th>
+                <th>Trip Type</th>
+                <th>Status</th>
+                <th class="admin-only ts-col" style="display:none">Created At</th>
+              </tr>
+            </thead>
+            <tbody id="recentTable">
+              <tr><td colspan="5" class="empty-row">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Nationality</th>
-              <th>Trip Type</th>
-              <th>Status</th>
-              <th class="admin-only ts-col" style="display:none">Created At</th>
-            </tr>
-          </thead>
-          <tbody id="recentTable">
-            <tr><td colspan="5" class="empty-row">Loading...</td></tr>
-          </tbody>
-        </table>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title" id="recentQuotesTitle">Recent Quotes</h2>
+          <a href="sales.html" class="btn-link">View All</a>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ref</th>
+                <th>Client</th>
+                <th>Status</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody id="recentQuotesTable">
+              <tr><td colspan="4" class="empty-row">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- EMPLOYEES (SuperAdmin Only) -->
-    <div class="card superadmin-only" id="employeesCard" style="display:none">
+    <div class="card superadmin-only" id="employeesCard" style="display:none; margin-top:18px;">
       <div class="card-header">
-        <h2 class="card-title">👥 Team Members</h2>
-        <a href="users.html" class="btn-link">Manage All →</a>
+        <h2 class="card-title">Team Members</h2>
+        <a href="users.html" class="btn-link">Manage All</a>
       </div>
       <div class="table-wrap">
         <table class="data-table">
@@ -182,47 +389,24 @@
       document.getElementById('rolePill').textContent = roleLabel(currentRole);
       document.getElementById('rolePill').className = `role-pill role-${roleClass(currentRole)}`;
 
+      document.getElementById('heroTitle').textContent = isAdminLevel(currentRole) ? 'Team and revenue overview' : 'Your recent activity';
+      document.getElementById('heroSubtitle').textContent = isAdminLevel(currentRole)
+        ? 'Track all clients, quotes, approvals, and overall performance in one place.'
+        : 'Monitor your own clients, quotes, and revenue without seeing other team members\' records.';
+
+      document.getElementById('recentClientsTitle').textContent = isAdminLevel(currentRole) ? 'Recent Clients' : 'My Recent Clients';
+      document.getElementById('recentQuotesTitle').textContent = isAdminLevel(currentRole) ? 'Recent Quotes' : 'My Recent Quotes';
+
       applyRoleUI(currentRole);
 
-      if (isAdminLevel(currentRole)) {
-        loadWorkerStats();
-      }
       if (canManageUsers(currentRole)) {
         loadEmployees();
       }
 
       loadStats();
       loadRecentClients();
+      loadRecentQuotes();
     });
-
-    async function loadWorkerStats() {
-      const { data: workers } = await supabaseClient
-        .from('profiles')
-        .select('id')
-        .eq('Roles', 'Employee / Worker');
-
-      if (!workers) return;
-
-      document.getElementById('totalWorkers').textContent = workers.length;
-
-      const { data: clientsData } = await supabaseClient
-        .from('clients')
-        .select('created_by, status');
-
-      if (!clientsData) return;
-
-      const workerIds = workers.map(w => w.id);
-      const workerClients = clientsData.filter(c => workerIds.includes(c.created_by));
-      const convertedCount = workerClients.filter(c => c.status === 'Converted').length;
-
-      document.getElementById('workerClientsCreated').textContent = workerClients.length;
-      document.getElementById('workerClientsConverted').textContent = convertedCount;
-
-      const rate = workerClients.length > 0
-        ? Math.round((convertedCount / workerClients.length) * 100)
-        : 0;
-      document.getElementById('conversionRate').textContent = `${rate}%`;
-    }
 
     async function loadStats() {
       const isAdmin = isAdminLevel(currentRole);
@@ -232,18 +416,29 @@
         clientsQuery = clientsQuery.eq('created_by', currentUserId);
       }
 
-      const { data: clientsData, error: clientsError } = await clientsQuery;
-      if (clientsError || !clientsData) {
-        console.error('Error loading clients stats:', clientsError);
-        return;
-      }
-
       let quotesQuery = supabaseClient.from('quotes').select('grand_total, created_by, status');
       if (!isAdmin) {
         quotesQuery = quotesQuery.eq('created_by', currentUserId);
       }
 
-      const { data: quotesData, error: quotesError } = await quotesQuery;
+      let workersQuery = supabaseClient.from('profiles').select('id').eq('Roles', 'Employee / Worker');
+      let pendingQuery = null;
+      if (isAdmin) {
+        pendingQuery = supabaseClient.from('profiles').select('id').eq('Status', 'Pending');
+      }
+
+      const [{ data: clientsData, error: clientsError }, { data: quotesData, error: quotesError }, { data: workersData }, pendingResult] = await Promise.all([
+        clientsQuery,
+        quotesQuery,
+        workersQuery,
+        pendingQuery ? pendingQuery : Promise.resolve({ data: [], error: null })
+      ]);
+
+      if (clientsError) {
+        console.error('Error loading clients stats:', clientsError);
+        return;
+      }
+
       if (quotesError) {
         console.error('Error loading quote stats:', quotesError);
         return;
@@ -252,15 +447,18 @@
       const clients = clientsData || [];
       const quotes = quotesData || [];
       const totalRevenue = quotes.reduce((sum, quote) => sum + (Number(quote.grand_total) || 0), 0);
-      const teamCount = isAdmin
-        ? (await supabaseClient.from('profiles').select('id').eq('Roles', 'Employee / Worker')).data?.length || 0
+      const workerCount = workersData?.length || 0;
+      const teamPerformance = isAdmin && workerCount > 0
+        ? Math.round(clients.length / workerCount)
         : 0;
+      const pendingApprovals = pendingResult?.data?.length || 0;
 
       renderStatsCards({
         clients: clients.length,
         quotes: quotes.length,
         revenue: totalRevenue,
-        teamPerformance: teamCount
+        teamPerformance,
+        pendingApprovals
       });
     }
 
@@ -273,38 +471,40 @@
             { icon: '👥', value: stats.clients, label: 'All Clients' },
             { icon: '🧾', value: stats.quotes, label: 'All Quotes' },
             { icon: '💰', value: formatCurrency(stats.revenue), label: 'Total Revenue' },
-            { icon: '📈', value: stats.teamPerformance, label: 'Team Performance' }
+            { icon: '📈', value: stats.teamPerformance, label: 'Team Performance' },
+            { icon: '⏳', value: stats.pendingApprovals, label: 'Pending Approvals' }
           ]
         : [
             { icon: '👥', value: stats.clients, label: 'My Clients' },
             { icon: '🧾', value: stats.quotes, label: 'My Quotes' },
-            { icon: '💰', value: formatCurrency(stats.revenue), label: 'My Total Sales' }
+            { icon: '💰', value: formatCurrency(stats.revenue), label: 'My Revenue' }
           ];
 
       grid.innerHTML = cards.map(card => `
         <div class="stat-card">
-          <div class="stat-icon">${card.icon}</div>
-          <div class="stat-num">${card.value}</div>
+          <div class="stat-top">
+            <div class="stat-icon">${card.icon}</div>
+            <div class="stat-value">${card.value}</div>
+          </div>
           <div class="stat-label">${card.label}</div>
         </div>
       `).join('');
     }
 
     async function loadRecentClients() {
+      const isAdmin = isAdminLevel(currentRole);
       let query = supabaseClient
         .from('clients')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(5);
 
-      if (!isAdminLevel(currentRole)) {
+      if (!isAdmin) {
         query = query.eq('created_by', currentUserId);
       }
 
       const { data } = await query;
-
       const tbody = document.getElementById('recentTable');
-      const isAdmin = isAdminLevel(currentRole);
       const colSpan = isAdmin ? 5 : 4;
 
       if (!data || data.length === 0) {
@@ -317,8 +517,38 @@
           <td><a href="client-detail.html?id=${c.id}" class="client-link">${c.full_name}</a></td>
           <td>${c.nationality || '—'}</td>
           <td>${c.trip_type || '—'}</td>
-          <td><span class="status-badge status-${slugify(c.status)}">${c.status}</span></td>
+          <td><span class="status-badge status-${slugify(c.status)}">${c.status || '—'}</span></td>
           ${isAdmin ? `<td class="ts-col">${formatDate(c.created_at)}</td>` : ''}
+        </tr>
+      `).join('');
+    }
+
+    async function loadRecentQuotes() {
+      const isAdmin = isAdminLevel(currentRole);
+      let query = supabaseClient
+        .from('quotes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (!isAdmin) {
+        query = query.eq('created_by', currentUserId);
+      }
+
+      const { data } = await query;
+      const tbody = document.getElementById('recentQuotesTable');
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">No quotes yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(q => `
+        <tr>
+          <td>${q.ref || '—'}</td>
+          <td>${q.client_name || '—'}</td>
+          <td><span class="status-badge status-${slugify(q.status)}">${q.status || '—'}</span></td>
+          <td>${formatCurrency(q.grand_total || 0)}</td>
         </tr>
       `).join('');
     }

@@ -144,12 +144,7 @@
       }
 
       document.getElementById('sidebarRole').textContent = roleLabel(profile.role);
-      if (profile.role === 'admin' || profile.role === 'superadmin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-      }
-      if (profile.role === 'superadmin') {
-        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
-      }
+      applyRoleUI(profile.role);
 
       const params = new URLSearchParams(window.location.search);
       clientId = params.get('id');

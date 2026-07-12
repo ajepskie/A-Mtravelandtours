@@ -17,13 +17,13 @@
     <div class="sidebar-role" id="sidebarRole">Loading...</div>
     <nav class="sidebar-nav">
       <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
-      <a href="clients.html" class="nav-item">👥 Clients</a>
-      <a href="add-client.html" class="nav-item">➕ Add Client</a>
-      <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
+      <a href="clients.html" class="nav-item clients-only">👥 Clients</a>
+      <a href="add-client.html" class="nav-item add-client-only">➕ Add Client</a>
+      <a href="sales.html" class="nav-item sales-only">💰 Sales & Quotes</a>
       <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
-      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
-      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
-      <a href="users.html" class="nav-item superadmin-only active">⚙️ Manage Users</a>
+      <a href="worker-performance.html" class="nav-item workers-only" style="display:none">📈 Workers</a>
+      <a href="backup.html" class="nav-item backup-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only active" style="display:none">⚙️ Manage Users</a>
     </nav>
     <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
   </aside>
@@ -141,13 +141,14 @@
       currentUserId = user.id;
       const profile = await getProfile(user.id);
 
-      if (profile.role !== 'superadmin') {
+      if (!canManageUsers(profile.role)) {
         alert('Access denied. Super Admin only.');
         window.location.href = 'dashboard.html';
         return;
       }
 
-      document.getElementById('sidebarRole').textContent = '👑 Super Admin';
+      document.getElementById('sidebarRole').textContent = roleLabel(profile.role);
+      applyRoleUI(profile.role);
       loadUsers();
     });
 
@@ -313,7 +314,14 @@
     }
 
     function roleLabel(r) {
-      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
+      const normalized = normalizeRole(r);
+      return {
+        [ROLES.SUPER_ADMIN]: '👑 Super Admin',
+        [ROLES.ADMIN]: '🔧 Admin',
+        [ROLES.ACCOUNTS]: '💼 Accounts',
+        [ROLES.WORKER]: '👷 Worker',
+        [ROLES.TESTER]: '🧪 Tester'
+      }[normalized] || normalized;
     }
 
     function formatDate(d) { return d ? new Date(d).toLocaleString() : '—'; }

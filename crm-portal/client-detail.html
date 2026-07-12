@@ -121,13 +121,7 @@
       const role = profile.role;
 
       document.getElementById('sidebarRole').textContent = roleLabel(role);
-
-      if (role === 'admin' || role === 'superadmin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-      }
-      if (role === 'superadmin') {
-        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
-      }
+      applyRoleUI(role);
 
       const params = new URLSearchParams(window.location.search);
       const clientId = params.get('id');
@@ -161,14 +155,14 @@
       }
 
       // Timestamps — admin only
-      if (role === 'admin' || role === 'superadmin') {
+      if (canViewTimestamps(role)) {
         document.getElementById('tsCard').style.display = '';
         document.getElementById('d_created').textContent = formatDate(data.created_at);
         document.getElementById('d_updated').textContent = formatDate(data.updated_at);
       }
 
       // Action buttons — admin & superadmin only
-      if (role === 'admin' || role === 'superadmin') {
+      if (canEdit(role)) {
         document.getElementById('actionBtns').innerHTML = `
           <a href="edit-client.html?id=${data.id}" class="btn btn-primary">✏️ Edit</a>
         `;

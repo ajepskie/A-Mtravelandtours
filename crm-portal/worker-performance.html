@@ -143,20 +143,14 @@
       currentRole = profile.role;
 
       // Only admin & superadmin can access this
-      if (currentRole !== 'admin' && currentRole !== 'superadmin') {
+      if (!isAdminLevel(currentRole)) {
         alert('Access denied. Admin only.');
         window.location.href = 'dashboard.html';
         return;
       }
 
       document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
-
-      if (currentRole === 'admin' || currentRole === 'superadmin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-      }
-      if (currentRole === 'superadmin') {
-        document.querySelectorAll('.superadmin-only').forEach(el => el.style.display = '');
-      }
+      applyRoleUI(currentRole);
 
       // Set today's date as default filter
       const today = new Date().toISOString().split('T')[0];
