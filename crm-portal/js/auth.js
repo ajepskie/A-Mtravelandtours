@@ -2,24 +2,23 @@
 
 function applyTheme(theme) {
   const resolvedTheme = theme === 'light' ? 'light' : 'dark';
-  document.body.setAttribute('data-theme', resolvedTheme);
-  localStorage.setItem('crm-theme', resolvedTheme);
-  const toggle = document.querySelector('.theme-toggle');
-  if (toggle) {
+  document.documentElement.setAttribute('data-theme', resolvedTheme);
+  localStorage.setItem('amt-theme', resolvedTheme);
+  document.querySelectorAll('.theme-toggle').forEach(toggle => {
     toggle.innerHTML = resolvedTheme === 'dark'
       ? '☀️ Light'
       : '🌙 Dark';
-  }
+  });
 }
 
 function toggleTheme() {
-  const current = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
   applyTheme(current === 'light' ? 'dark' : 'light');
 }
 
 function initThemeToggle() {
-  const savedTheme = localStorage.getItem('crm-theme');
-  applyTheme(savedTheme || 'dark');
+  const savedTheme = localStorage.getItem('amt-theme');
+  const theme = savedTheme || 'dark';
 
   document.querySelectorAll('.topbar').forEach(topbar => {
     if (topbar.querySelector('.theme-toggle')) return;
@@ -33,8 +32,12 @@ function initThemeToggle() {
     button.setAttribute('aria-label', 'Toggle color theme');
     button.onclick = toggleTheme;
     actions.appendChild(button);
-    topbar.appendChild(actions);
+
+    const insertTarget = topbar.querySelector('.topbar-right') || topbar;
+    insertTarget.appendChild(actions);
   });
+
+  applyTheme(theme);
 }
 
 // Role definitions — must match exactly what's in Supabase profiles table
@@ -162,31 +165,11 @@ function applyRoleUI(role) {
   const isTester = normalizedRole === ROLES.TESTER;
 
   document.querySelectorAll('.admin-only').forEach(el => {
-    el.style.display = (isSuperAdmin || isAdmin) ? '' : 'none';
+    el.style.display = (isSuperAdmin || isAdmin || isAccounts) ? '' : 'none';
   });
 
   document.querySelectorAll('.superadmin-only').forEach(el => {
     el.style.display = isSuperAdmin ? '' : 'none';
-  });
-
-  document.querySelectorAll('.backup-only').forEach(el => {
-    el.style.display = (isSuperAdmin || isAdmin || isAccounts) ? '' : 'none';
-  });
-
-  document.querySelectorAll('.workers-only').forEach(el => {
-    el.style.display = (isSuperAdmin || isAdmin) ? '' : 'none';
-  });
-
-  document.querySelectorAll('.sales-only').forEach(el => {
-    el.style.display = (isSuperAdmin || isAdmin || isAccounts || isWorker) ? '' : 'none';
-  });
-
-  document.querySelectorAll('.add-client-only').forEach(el => {
-    el.style.display = (isSuperAdmin || isAdmin || isAccounts || isWorker) ? '' : 'none';
-  });
-
-  document.querySelectorAll('.clients-only').forEach(el => {
-    el.style.display = (isSuperAdmin || isAdmin || isAccounts || isWorker || isTester) ? '' : 'none';
   });
 
   document.querySelectorAll('.ts-col').forEach(el => {

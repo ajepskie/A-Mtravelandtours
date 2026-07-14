@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>A-M Travel CRM — Invoice Generator</title>
+  <script>const theme = localStorage.getItem("amt-theme") || "dark";document.documentElement.setAttribute("data-theme", theme);</script>
+<title>A-M Travel CRM — Invoice Generator</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/crm.css"/>
   <link rel="stylesheet" href="../assets/logos.css"/>
@@ -342,16 +343,17 @@
       <div class="sidebar-logo">A-M <span>Travel</span></div>
     </div>
     <div class="sidebar-role" id="sidebarRole">Loading...</div>
-    <nav class="sidebar-nav">
+            <nav class="sidebar-nav">
       <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
       <a href="clients.html" class="nav-item">👥 Clients</a>
       <a href="add-client.html" class="nav-item">➕ Add Client</a>
       <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
-      <a href="invoice.html" class="nav-item" style="display:none">🧾 Invoice</a>
+      <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
       <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
       <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
       <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
     </nav>
+
     <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
   </aside>
 
@@ -917,3 +919,5 @@
   </script>
 </body>
 </html>
+
+
