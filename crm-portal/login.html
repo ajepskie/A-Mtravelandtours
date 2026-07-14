@@ -213,10 +213,35 @@
       clearForms();
     }
 
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function showStatus(msg) {
+      const err = document.getElementById('errorMsg');
+      err.textContent = msg;
+      err.classList.add('show');
+      err.style.background = 'rgba(56,189,248,0.1)';
+      err.style.borderColor = 'rgba(56,189,248,0.2)';
+      err.style.color = '#38bdf8';
+    }
+
     function clearForms() {
       document.getElementById('email').value = '';
       document.getElementById('password').value = '';
-      document.getElementById('errorMsg').classList.remove('show');
+      const err = document.getElementById('errorMsg');
+      err.classList.remove('show');
+      err.style.background = '';
+      err.style.borderColor = '';
+      err.style.color = '';
+    }
+
+    async function fetchProfile(userId) {
+      return await supabaseClient
+        .from('profiles')
+        .select('Roles,status')
+        .eq('id', userId)
+        .maybeSingle();
     }
 
     async function handleLogin() {
@@ -233,51 +258,82 @@
       btn.disabled = true;
       btn.textContent = 'Signing in...';
       err.classList.remove('show');
+      err.style.background = '';
+      err.style.borderColor = '';
+      err.style.color = '';
 
-      const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({ email, password });
+      try {
+        const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-      if (signInError) {
-        showError('Invalid email or password. Please try again.', 'errorMsg');
+        if (signInError) {
+          throw new Error('Invalid email or password. Please try again.');
+        }
+
+        const userId = signInData?.user?.id;
+        if (!userId) {
+          throw new Error('Login failed. Please try again.');
+        }
+
+        showStatus('Verifying your account...');
+
+        let session = null;
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const { data } = await supabaseClient.auth.getSession();
+          if (data?.session?.user?.id === userId) {
+            session = data.session;
+            break;
+          }
+          await delay(500);
+        }
+
+        if (!session) {
+          throw new Error('Unable to verify your account status right now.');
+        }
+
+        let profileResult = await fetchProfile(userId);
+        let profileData = profileResult.data;
+        let profileError = profileResult.error;
+
+        if (profileError || !profileData) {
+          await delay(1000);
+          profileResult = await fetchProfile(userId);
+          profileData = profileResult.data;
+          profileError = profileResult.error;
+        }
+
+        if (!profileError && !profileData) {
+          const { data: insertData, error: insertError } = await supabaseClient
+            .from('profiles')
+            .insert({ id: userId, Roles: 'Employee / Worker', status: 'Pending' })
+            .select()
+            .maybeSingle();
+
+          profileData = insertData;
+          profileError = insertError;
+        }
+
+        if (profileError || !profileData) {
+          throw new Error('Unable to verify your account status right now.');
+        }
+
+        const status = (profileData.status || 'Pending').toLowerCase();
+        if (status === 'approved') {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+
+        if (status === 'rejected') {
+          showError('Your account has been rejected', 'errorMsg');
+        } else {
+          showError('Your account is pending approval', 'errorMsg');
+        }
+      } catch (error) {
+        const message = error?.message || 'Unable to verify your account status right now.';
+        showError(message, 'errorMsg');
+      } finally {
         btn.disabled = false;
         btn.textContent = 'Sign In';
-        return;
       }
-
-      const userId = signInData?.user?.id;
-      if (!userId) {
-        showError('Login failed. Please try again.', 'errorMsg');
-        btn.disabled = false;
-        btn.textContent = 'Sign In';
-        return;
-      }
-
-      const { data: profileData, error: profileError } = await supabaseClient
-        .from('profiles')
-        .select('status')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profileError) {
-        showError('Unable to verify your account status right now.', 'errorMsg');
-        btn.disabled = false;
-        btn.textContent = 'Sign In';
-        return;
-      }
-
-      const status = (profileData?.status || 'Pending').toLowerCase();
-      if (status === 'pending') {
-        showError('Your account is pending approval', 'errorMsg');
-      } else if (status === 'rejected') {
-        showError('Your account has been rejected', 'errorMsg');
-      } else if (status === 'approved') {
-        window.location.href = 'dashboard.html';
-        return;
-      } else {
-        showError('Your account is pending approval', 'errorMsg');
-      }
-
-      btn.disabled = false;
-      btn.textContent = 'Sign In';
     }
 
     function showError(msg, elementId) {
