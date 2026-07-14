@@ -217,6 +217,15 @@
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    async function waitForSession(maxAttempts = 10, interval = 500) {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const { data } = await supabaseClient.auth.getSession();
+        if (data?.session?.user?.id) return data.session;
+        await delay(interval);
+      }
+      return null;
+    }
+
     function showStatus(msg) {
       const err = document.getElementById('errorMsg');
       err.textContent = msg;
@@ -269,24 +278,15 @@
           throw new Error('Invalid email or password. Please try again.');
         }
 
-        const userId = signInData?.user?.id;
+        const userId = signInData?.user?.id || signInData?.session?.user?.id;
         if (!userId) {
           throw new Error('Login failed. Please try again.');
         }
 
         showStatus('Verifying your account...');
 
-        let session = null;
-        for (let attempt = 0; attempt < 5; attempt++) {
-          const { data } = await supabaseClient.auth.getSession();
-          if (data?.session?.user?.id === userId) {
-            session = data.session;
-            break;
-          }
-          await delay(500);
-        }
-
-        if (!session) {
+        const session = await waitForSession(15, 500);
+        if (!session || session.user?.id !== userId) {
           throw new Error('Unable to verify your account status right now.');
         }
 

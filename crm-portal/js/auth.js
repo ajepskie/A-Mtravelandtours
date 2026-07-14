@@ -127,32 +127,67 @@ function roleClass(role) {
 
 document.addEventListener('DOMContentLoaded', initThemeToggle);
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function waitForSession(maxAttempts = 10, interval = 500) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data?.session) return data.session;
+    await delay(interval);
+  }
+  return null;
+}
+
 // ── Require authentication — redirect to login if not logged in
 async function requireAuth() {
-  const { data } = await supabaseClient.auth.getSession();
-  if (!data.session) {
+  const session = await waitForSession();
+  if (!session) {
     window.location.href = 'login.html';
     return null;
   }
-  return data.session.user;
+  return session.user;
 }
 
 // ── Get user profile from profiles table
 // NOTE: Supabase column is "Roles" (capital R) — we normalize it to "role"
 // so ALL html files can use profile.role consistently
 async function getProfile(userId) {
-  const { data } = await supabaseClient
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const maxAttempts = 3;
+  let lastError = null;
 
-  if (!data) return { role: 'Employee / Worker' };
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
 
-  return {
-    ...data,
-    role: normalizeRole(data.Roles || data.role || 'Employee / Worker')
-  };
+    if (error) {
+      lastError = error;
+      await delay(500);
+      continue;
+    }
+
+    if (data) {
+      return {
+        ...data,
+        role: normalizeRole(data.Roles || data.role || 'Employee / Worker')
+      };
+    }
+
+    if (attempt < maxAttempts - 1) {
+      await delay(500);
+      continue;
+    }
+  }
+
+  if (lastError) {
+    console.warn('getProfile retry failed:', lastError);
+  }
+
+  return { role: 'Employee / Worker' };
 }
 
 // ── Apply role-based UI visibility
