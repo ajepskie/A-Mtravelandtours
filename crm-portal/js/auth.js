@@ -194,6 +194,17 @@ function applyRoleUI(role) {
   });
 }
 
+function setActiveNav() {
+  const currentPage = window.location.pathname.split('/').pop();
+  document.querySelectorAll('.nav-item').forEach(link => {
+    link.classList.remove('active');
+    const linkPage = link.getAttribute('href');
+    if (linkPage === currentPage) {
+      link.classList.add('active');
+    }
+  });
+}
+
 // ── Logout
 async function handleLogout() {
   await supabaseClient.auth.signOut();

@@ -18,8 +18,8 @@
     <nav class="sidebar-nav">
       <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
       <a href="clients.html" class="nav-item">👥 Clients</a>
-      <a href="add-client.html" class="nav-item active">➕ Add Client</a>
-      <a href="sales.html" class="nav-item active">💰 Sales & Quotes</a>
+      <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
       <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
       <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
       <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
@@ -136,6 +136,7 @@
       const role = profile.role;
       document.getElementById('sidebarRole').textContent = roleLabel(role);
       applyRoleUI(role);
+      setActiveNav();
 
       // Auto-set today's date for registered_date
       const today = new Date().toISOString().split('T')[0];

@@ -145,6 +145,7 @@
 
       document.getElementById('sidebarRole').textContent = roleLabel(profile.role);
       applyRoleUI(profile.role);
+      setActiveNav();
 
       const params = new URLSearchParams(window.location.search);
       clientId = params.get('id');

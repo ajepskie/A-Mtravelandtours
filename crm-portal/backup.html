@@ -25,7 +25,7 @@
       <a href="sales.html" class="nav-item sales-only">💰 Sales & Quotes</a>
       <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
       <a href="worker-performance.html" class="nav-item workers-only" style="display:none">📈 Workers</a>
-      <a href="backup.html" class="nav-item active backup-only" style="display:none">💾 Backup</a>
+      <a href="backup.html" class="nav-item backup-only" style="display:none">💾 Backup</a>
       <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
     </nav>
     <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
@@ -151,6 +151,7 @@
 
       document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
       applyRoleUI(currentRole);
+      setActiveNav();
       if (canManageUsers(currentRole)) {
         loadActivityLog();
       }

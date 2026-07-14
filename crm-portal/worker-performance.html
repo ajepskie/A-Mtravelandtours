@@ -19,7 +19,7 @@
       <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
       <a href="clients.html" class="nav-item">👥 Clients</a>
       <a href="add-client.html" class="nav-item">➕ Add Client</a>
-      <a href="worker-performance.html" class="nav-item active">📈 Workers</a>
+      <a href="worker-performance.html" class="nav-item">📈 Workers</a>
       <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
       <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
       <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
@@ -151,6 +151,7 @@
 
       document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
       applyRoleUI(currentRole);
+      setActiveNav();
 
       // Set today's date as default filter
       const today = new Date().toISOString().split('T')[0];

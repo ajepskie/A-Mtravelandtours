@@ -226,7 +226,7 @@
       <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
       <a href="clients.html" class="nav-item clients-only">👥 Clients</a>
       <a href="add-client.html" class="nav-item add-client-only">➕ Add Client</a>
-      <a href="sales.html" class="nav-item active sales-only">💰 Sales & Quotes</a>
+      <a href="sales.html" class="nav-item sales-only">💰 Sales & Quotes</a>
       <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
       <a href="worker-performance.html" class="nav-item workers-only" style="display:none">📈 Workers</a>
       <a href="backup.html" class="nav-item backup-only" style="display:none">💾 Backup</a>
@@ -451,6 +451,7 @@
 
       document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
       applyRoleUI(currentRole);
+      setActiveNav();
 
       generateRef();
       loadClients();
