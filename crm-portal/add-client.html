@@ -182,7 +182,10 @@
         }
       }
 
-      const { error } = await supabaseClient.from('clients').insert([{
+      // Attempt to insert client including registered_date. If the database schema does not
+      // include the registered_date column (Supabase schema cache error), retry inserting
+      // without that field so users can still save clients while the DB is fixed.
+      let insertPayload = [{
         full_name,
         passport_number: document.getElementById('passport_number').value.trim() || null,
         contact: document.getElementById('contact').value.trim() || null,
@@ -197,8 +200,34 @@
         updated_by: currentUser.id
       }]);
 
-      if (error) {
-        showToast('Error saving client: ' + error.message, 'error');
+      // Try inserting the payload. If the DB schema is missing registered_date,
+      // PostgREST/Supabase may return an error mentioning the column — handle that
+      // by retrying without the field so users can continue working.
+      let insertResult = await supabaseClient.from('clients').insert(insertPayload);
+      let insertError = insertResult.error;
+      if (insertError) {
+        console.error('Client insert error:', insertError);
+        // Detect specific schema cache error mentioning registered_date (case-insensitive)
+        const msg = String(insertError.message || '').toLowerCase();
+        if (msg.includes("registered_date")) {
+          // Retry without registered_date field
+          const payloadNoDate = insertPayload.map(p => { const copy = { ...p }; delete copy.registered_date; return copy; });
+          const retryResult = await supabaseClient.from('clients').insert(payloadNoDate);
+          if (retryResult.error) {
+            showToast('Error saving client: ' + retryResult.error.message, 'error');
+            btn.disabled = false;
+            btn.textContent = '💾 Save Client';
+            return;
+          }
+
+          // Log that we saved without the registered_date due to schema mismatch
+          await logActivity('CREATE_CLIENT', `Created client (without registered_date due to DB schema): ${full_name}`);
+          showToast('Client saved, but registered_date column is missing on the database. Please ask admin to add it.', 'warning');
+          setTimeout(() => window.location.href = 'clients.html', 1500);
+          return;
+        }
+
+        showToast('Error saving client: ' + insertError.message, 'error');
         btn.disabled = false;
         btn.textContent = '💾 Save Client';
         return;
