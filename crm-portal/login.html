@@ -258,6 +258,10 @@
       const password = document.getElementById('password').value;
       const btn = document.getElementById('loginBtn');
       const err = document.getElementById('errorMsg');
+      // Temporary opt-in debug for login flow. Enable by running in the console:
+      // localStorage.setItem('amt-debug-login','1')
+      const debugLogin = localStorage.getItem('amt-debug-login') === '1';
+      if (debugLogin) console.log('[DEBUG] handleLogin start', { email });
 
       if (!email || !password) {
         showError('Please enter your email and password.', 'errorMsg');
@@ -273,6 +277,14 @@
 
       try {
         const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+        // Limited debug logging (does not include tokens). Enable by setting localStorage 'amt-debug-login' to '1'.
+        if (debugLogin) {
+          console.log('[DEBUG] signIn result', {
+            userId: signInData?.user?.id || null,
+            sessionReturned: !!signInData?.session
+          });
+        }
 
         if (signInError) {
           throw new Error('Invalid email or password. Please try again.');
@@ -303,12 +315,14 @@
         let profileResult = await fetchProfile(confirmedUserId);
         let profileData = profileResult.data;
         let profileError = profileResult.error;
+        if (debugLogin) console.log('[DEBUG] initial profile fetch', { userId: confirmedUserId, profileData, profileError });
 
         if (profileError || !profileData) {
           await delay(1000);
           profileResult = await fetchProfile(confirmedUserId);
           profileData = profileResult.data;
           profileError = profileResult.error;
+          if (debugLogin) console.log('[DEBUG] retry profile fetch', { userId: confirmedUserId, profileData, profileError });
         }
 
         if (!profileError && !profileData) {
@@ -320,6 +334,7 @@
 
           profileData = insertData;
           profileError = insertError;
+          if (debugLogin) console.log('[DEBUG] created profile', { confirmedUserId, profileData, profileError });
         }
 
         if (profileError || !profileData) {
@@ -339,7 +354,24 @@
         }
       } catch (error) {
         const message = error?.message || 'Unable to verify your account status right now.';
+        // show user-facing message
         showError(message, 'errorMsg');
+        // If debug enabled, append limited debug details (no tokens) to the error box and console.
+        if (debugLogin) {
+          console.error('[DEBUG] login error details', {
+            message: message,
+            signInUserId: signInData?.user?.id || null,
+            sessionPresent: !!(session),
+            profileError: profileError || null
+          });
+          const dbg = document.createElement('pre');
+          dbg.style.marginTop = '8px';
+          dbg.style.fontSize = '0.75rem';
+          dbg.style.color = '#cbd5e1';
+          dbg.textContent = `Debug: ${message}`;
+          const errBox = document.getElementById('errorMsg');
+          if (errBox && !errBox.querySelector('pre')) errBox.appendChild(dbg);
+        }
       } finally {
         btn.disabled = false;
         btn.textContent = 'Sign In';
