@@ -278,25 +278,31 @@
           throw new Error('Invalid email or password. Please try again.');
         }
 
-        const userId = signInData?.user?.id || signInData?.session?.user?.id;
+        // Prefer the session returned directly by signInWithPassword if available.
+        // This prevents a timing window where getSession() may not yet reflect the new session
+        // (which is why a manual page refresh later lets you through). If the returned
+        // session is missing, fall back to polling getSession().
+        let session = signInData?.session || null;
+        const userId = signInData?.user?.id || session?.user?.id;
         if (!userId) {
-          throw new Error('Login failed. Please try again.');
+          // If we don't have a user id yet, try to wait for the session to be populated.
+          session = await waitForSession(15, 500);
         }
 
-        showStatus('Verifying your account...');
-
-        const session = await waitForSession(15, 500);
-        if (!session || session.user?.id !== userId) {
+        if (!session || session.user?.id !== (userId || session.user?.id)) {
           throw new Error('Unable to verify your account status right now.');
         }
 
-        let profileResult = await fetchProfile(userId);
+        // Ensure userId is set from the confirmed session.
+        const confirmedUserId = userId || session.user.id;
+
+        let profileResult = await fetchProfile(confirmedUserId);
         let profileData = profileResult.data;
         let profileError = profileResult.error;
 
         if (profileError || !profileData) {
           await delay(1000);
-          profileResult = await fetchProfile(userId);
+          profileResult = await fetchProfile(confirmedUserId);
           profileData = profileResult.data;
           profileError = profileResult.error;
         }
@@ -304,7 +310,7 @@
         if (!profileError && !profileData) {
           const { data: insertData, error: insertError } = await supabaseClient
             .from('profiles')
-            .insert({ id: userId, Roles: 'Employee / Worker', status: 'Pending' })
+            .insert({ id: confirmedUserId, Roles: 'Employee / Worker', status: 'Pending' })
             .select()
             .maybeSingle();
 
