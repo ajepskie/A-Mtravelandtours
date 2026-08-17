@@ -248,6 +248,13 @@
     function roleLabel(r) {
       return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
     }
+
+    // Ensure the saveClient function is available on the global window object so
+    // inline onclick handlers (e.g., <button onclick="saveClient()">) can call it
+    // even in environments where scoping behaves differently.
+    if (typeof window !== 'undefined' && typeof saveClient === 'function') {
+      window.saveClient = saveClient;
+    }
   </script>
 </body>
 </html>
