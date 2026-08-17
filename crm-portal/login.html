@@ -246,9 +246,11 @@
     }
 
     async function fetchProfile(userId) {
+      // Select all columns to avoid PostgREST schema edge-cases (capitalized column names).
+      // The UI will read profile.Roles and profile.status as needed.
       return await supabaseClient
         .from('profiles')
-        .select('Roles,status')
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
     }
@@ -258,6 +260,10 @@
       const password = document.getElementById('password').value;
       const btn = document.getElementById('loginBtn');
       const err = document.getElementById('errorMsg');
+      // Temporary opt-in debug for login flow. Enable by running in the console:
+      // localStorage.setItem('amt-debug-login','1')
+      const debugLogin = localStorage.getItem('amt-debug-login') === '1';
+      if (debugLogin) console.log('[DEBUG] handleLogin start', { email });
 
       if (!email || !password) {
         showError('Please enter your email and password.', 'errorMsg');
@@ -274,42 +280,63 @@
       try {
         const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({ email, password });
 
+        // Limited debug logging (does not include tokens). Enable by setting localStorage 'amt-debug-login' to '1'.
+        if (debugLogin) {
+          console.log('[DEBUG] signIn result', {
+            userId: signInData?.user?.id || null,
+            sessionReturned: !!signInData?.session
+          });
+        }
+
         if (signInError) {
           throw new Error('Invalid email or password. Please try again.');
         }
 
-        const userId = signInData?.user?.id || signInData?.session?.user?.id;
-        if (!userId) {
-          throw new Error('Login failed. Please try again.');
+        // Prefer the session returned directly by signInWithPassword if available.
+        // However, some Supabase clients return a user id but not the session immediately.
+        // In that case always wait for getSession() to return a populated session to avoid
+        // a race that shows a spurious "Unable to verify your account status" error
+        // (the refresh succeeds because the persisted session is then read on load).
+        let session = signInData?.session || null;
+        let userId = signInData?.user?.id || session?.user?.id;
+
+        // If the signIn response did not include a session, poll getSession() until available.
+        if (!session) {
+          session = await waitForSession(15, 500);
+          userId = userId || session?.user?.id;
         }
 
-        showStatus('Verifying your account...');
-
-        const session = await waitForSession(15, 500);
-        if (!session || session.user?.id !== userId) {
+        // If, after waiting, there's no session or the session user id doesn't match, fail.
+        if (!session || !userId || session.user?.id !== userId) {
           throw new Error('Unable to verify your account status right now.');
         }
 
-        let profileResult = await fetchProfile(userId);
+        // Use the confirmed session's user id for all profile operations.
+        const confirmedUserId = session.user.id;
+
+        let profileResult = await fetchProfile(confirmedUserId);
         let profileData = profileResult.data;
         let profileError = profileResult.error;
+        if (debugLogin) console.log('[DEBUG] initial profile fetch', { userId: confirmedUserId, profileData, profileError });
 
         if (profileError || !profileData) {
           await delay(1000);
-          profileResult = await fetchProfile(userId);
+          profileResult = await fetchProfile(confirmedUserId);
           profileData = profileResult.data;
           profileError = profileResult.error;
+          if (debugLogin) console.log('[DEBUG] retry profile fetch', { userId: confirmedUserId, profileData, profileError });
         }
 
         if (!profileError && !profileData) {
           const { data: insertData, error: insertError } = await supabaseClient
             .from('profiles')
-            .insert({ id: userId, Roles: 'Employee / Worker', status: 'Pending' })
+            .insert({ id: confirmedUserId, Roles: 'Employee / Worker', status: 'Pending' })
             .select()
             .maybeSingle();
 
           profileData = insertData;
           profileError = insertError;
+          if (debugLogin) console.log('[DEBUG] created profile', { confirmedUserId, profileData, profileError });
         }
 
         if (profileError || !profileData) {
@@ -329,7 +356,24 @@
         }
       } catch (error) {
         const message = error?.message || 'Unable to verify your account status right now.';
+        // show user-facing message
         showError(message, 'errorMsg');
+        // If debug enabled, append limited debug details (no tokens) to the error box and console.
+        if (debugLogin) {
+          console.error('[DEBUG] login error details', {
+            message: message,
+            signInUserId: signInData?.user?.id || null,
+            sessionPresent: !!(session),
+            profileError: profileError || null
+          });
+          const dbg = document.createElement('pre');
+          dbg.style.marginTop = '8px';
+          dbg.style.fontSize = '0.75rem';
+          dbg.style.color = '#cbd5e1';
+          dbg.textContent = `Debug: ${message}`;
+          const errBox = document.getElementById('errorMsg');
+          if (errBox && !errBox.querySelector('pre')) errBox.appendChild(dbg);
+        }
       } finally {
         btn.disabled = false;
         btn.textContent = 'Sign In';
