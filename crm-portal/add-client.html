@@ -140,6 +140,10 @@
       applyRoleUI(role);
       setActiveNav();
 
+      // Temporary opt-in debug for client save flow. Enable with:
+      // localStorage.setItem('amt-debug-client','1')
+      window.debugClient = localStorage.getItem('amt-debug-client') === '1';
+
       // Auto-set today's date for registered_date
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('registered_date').value = today;
@@ -173,7 +177,11 @@
           .upload(fileName, file);
 
         if (uploadError) {
-          showToast('Document upload failed. Saving without document.', 'error');
+          // Show the upload error message so user can act on it
+          const uploadMsg = uploadError.message || 'Document upload failed. Saving without document.';
+          showToast('Document upload failed: ' + uploadMsg, 'error');
+          console.error('Document upload error:', uploadError);
+          if (window.debugClient) console.log('[DEBUG] uploadError', uploadError);
         } else {
           const { data: urlData } = supabaseClient.storage
             .from('client-documents')
@@ -206,7 +214,11 @@
       let insertResult = await supabaseClient.from('clients').insert(insertPayload);
       let insertError = insertResult.error;
       if (insertError) {
+        // Show the original insert error so the user sees what failed immediately
         console.error('Client insert error:', insertError);
+        showToast('Error saving client: ' + (insertError.message || 'Unknown error'), 'error');
+        if (window.debugClient) console.log('[DEBUG] insertError', insertError);
+
         // Detect specific schema cache error mentioning registered_date (case-insensitive)
         const msg = String(insertError.message || '').toLowerCase();
         if (msg.includes("registered_date")) {
@@ -227,7 +239,6 @@
           return;
         }
 
-        showToast('Error saving client: ' + insertError.message, 'error');
         btn.disabled = false;
         btn.textContent = '💾 Save Client';
         return;
