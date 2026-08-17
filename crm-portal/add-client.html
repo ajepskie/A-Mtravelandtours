@@ -105,7 +105,7 @@
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Upload Document (Passport Copy, Visa, etc.)</label>
           <div class="file-upload" onclick="document.getElementById('docFile').click()">
-            <input type="file" id="docFile" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event)"/>
+            <input type="file" id="docFile" accept=".pdf,.jpg,.jpeg,.png" multiple onchange="handleFileSelect(event)"/>
             <div class="file-upload-label">
               <div style="font-size:2rem;margin-bottom:8px;">📎</div>
               <div>Click to upload or drag & drop</div>
@@ -150,10 +150,20 @@
     });
 
     function handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (file) {
-        document.getElementById('fileName').textContent = '✅ ' + file.name;
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) {
+        document.getElementById('fileName').textContent = '';
+        return;
       }
+      if (files.length > 10) {
+        showToast('You can upload up to 10 files at once.', 'error');
+        // Keep only first 10 files in the input
+        const dt = new DataTransfer();
+        files.slice(0,10).forEach(f => dt.items.add(f));
+        e.target.files = dt.files;
+      }
+      const names = files.slice(0,10).map(f => f.name).join(', ');
+      document.getElementById('fileName').textContent = `✅ ${names}`;
     }
 
     async function saveClient() {
@@ -167,26 +177,42 @@
       let document_url = null;
       const fileInput = document.getElementById('docFile');
 
-      // Upload document if selected
-      if (fileInput.files[0]) {
-        const file = fileInput.files[0];
-        const fileName = `${Date.now()}_${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabaseClient
-          .storage
-          .from('client-documents')
-          .upload(fileName, file);
+      // Upload documents if selected (support up to 10 files)
+      const files = Array.from(fileInput.files || []);
+      let uploadedUrls = [];
+      if (files.length > 0) {
+        if (files.length > 10) {
+          showToast('You can upload up to 10 files at once. Uploading first 10.', 'warning');
+        }
+        const toUpload = files.slice(0, 10);
+        for (let i = 0; i < toUpload.length; i++) {
+          const file = toUpload[i];
+          const fileName = `${Date.now()}_${i}_${file.name}`;
+          const { data: uploadData, error: uploadError } = await supabaseClient
+            .storage
+            .from('client-documents')
+            .upload(fileName, file);
 
-        if (uploadError) {
-          // Show the upload error message so user can act on it
-          const uploadMsg = uploadError.message || 'Document upload failed. Saving without document.';
-          showToast('Document upload failed: ' + uploadMsg, 'error');
-          console.error('Document upload error:', uploadError);
-          if (window.debugClient) console.log('[DEBUG] uploadError', uploadError);
-        } else {
+          if (uploadError) {
+            const uploadMsg = uploadError.message || 'Document upload failed.';
+            showToast('Document upload failed: ' + uploadMsg, 'error');
+            console.error('Document upload error:', uploadError);
+            if (window.debugClient) console.log('[DEBUG] uploadError', uploadError);
+            // Continue to next file rather than aborting all uploads
+            continue;
+          }
+
           const { data: urlData } = supabaseClient.storage
             .from('client-documents')
             .getPublicUrl(fileName);
-          document_url = urlData.publicUrl;
+          if (urlData?.publicUrl) uploadedUrls.push(urlData.publicUrl);
+        }
+
+        if (uploadedUrls.length > 0) {
+          // Keep backward compatible: document_url stores the first uploaded file's public URL.
+          document_url = uploadedUrls[0];
+          if (window.debugClient) console.log('[DEBUG] uploadedUrls', uploadedUrls);
+          showToast(`Uploaded ${uploadedUrls.length} file(s)`, 'success');
         }
       }
 
