@@ -246,9 +246,11 @@
     }
 
     async function fetchProfile(userId) {
+      // Select all columns to avoid PostgREST schema edge-cases (capitalized column names).
+      // The UI will read profile.Roles and profile.status as needed.
       return await supabaseClient
         .from('profiles')
-        .select('Roles,status')
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
     }
