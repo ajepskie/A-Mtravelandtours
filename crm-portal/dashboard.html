@@ -242,11 +242,19 @@
       <a href="clients.html" class="nav-item">👥 Clients</a>
       <a href="add-client.html" class="nav-item">➕ Add Client</a>
       <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
+<<<<<<< HEAD
               <a href="confirmation-papers.html" class="nav-item">📄 Confirmation Papers</a>
               <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
               <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
               <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
               <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
+=======
+      <a href="confirmation-papers.html" class="nav-item">📄 Confirmation Papers</a>
+      <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
+      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
+      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
+>>>>>>> main
             </nav>
 
     <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
@@ -431,7 +439,7 @@
         clientsQuery = clientsQuery.eq('created_by', currentUserId);
       }
 
-      let quotesQuery = supabaseClient.from('quotes').select('grand_total, created_by, status');
+      let quotesQuery = supabaseClient.from('quotes').select('grand_total, created_by, status, currency');
       if (!isAdmin) {
         quotesQuery = quotesQuery.eq('created_by', currentUserId);
       }
@@ -461,7 +469,14 @@
 
       const clients = clientsData || [];
       const quotes = quotesData || [];
-      const totalRevenue = quotes.reduce((sum, quote) => sum + (Number(quote.grand_total) || 0), 0);
+      // Compute revenue totals per currency to avoid mixing AED and PHP into a single number.
+      const totalsByCurrency = quotes.reduce((acc, quote) => {
+        const cur = (quote.currency || 'AED').toUpperCase();
+        acc[cur] = (acc[cur] || 0) + (Number(quote.grand_total) || 0);
+        return acc;
+      }, {});
+      const totalRevenueAED = totalsByCurrency['AED'] || 0;
+      const totalRevenuePHP = totalsByCurrency['PHP'] || 0;
       const workerCount = workersData?.length || 0;
       const teamPerformance = isAdmin && workerCount > 0
         ? Math.round(clients.length / workerCount)
@@ -471,7 +486,8 @@
       renderStatsCards({
         clients: clients.length,
         quotes: quotes.length,
-        revenue: totalRevenue,
+        revenueAED: totalRevenueAED,
+        revenuePHP: totalRevenuePHP,
         teamPerformance,
         pendingApprovals
       });
@@ -485,14 +501,16 @@
         ? [
             { icon: '👥', value: stats.clients, label: 'All Clients' },
             { icon: '🧾', value: stats.quotes, label: 'All Quotes' },
-            { icon: '💰', value: formatCurrency(stats.revenue), label: 'Total Revenue' },
+            { icon: '💰', value: formatCurrency(stats.revenueAED, 'AED'), label: 'Total Revenue (AED)' },
+            { icon: '💴', value: formatCurrency(stats.revenuePHP, 'PHP'), label: 'Total Revenue (PHP)' },
             { icon: '📈', value: stats.teamPerformance, label: 'Team Performance' },
             { icon: '⏳', value: stats.pendingApprovals, label: 'Pending Approvals' }
           ]
         : [
             { icon: '👥', value: stats.clients, label: 'My Clients' },
             { icon: '🧾', value: stats.quotes, label: 'My Quotes' },
-            { icon: '💰', value: formatCurrency(stats.revenue), label: 'My Revenue' }
+            { icon: '💰', value: formatCurrency(stats.revenueAED, 'AED'), label: 'My Revenue (AED)' },
+            { icon: '💴', value: formatCurrency(stats.revenuePHP, 'PHP'), label: 'My Revenue (PHP)' }
           ];
 
       grid.innerHTML = cards.map(card => `
@@ -563,7 +581,7 @@
           <td>${q.ref || '—'}</td>
           <td>${q.client_name || '—'}</td>
           <td><span class="status-badge status-${slugify(q.status)}">${q.status || '—'}</span></td>
-          <td>${formatCurrency(q.grand_total || 0)}</td>
+          <td>${formatCurrency(q.grand_total || 0, q.currency || 'AED')}</td>
         </tr>
       `).join('');
     }
@@ -669,12 +687,15 @@
       setTimeout(() => t.classList.remove('show'), 3500);
     }
 
-    function formatCurrency(value) {
-      return new Intl.NumberFormat('en-AE', {
-        style: 'currency',
-        currency: 'AED',
-        maximumFractionDigits: 0
-      }).format(Number(value) || 0);
+    function formatCurrency(value, currency = 'AED') {
+      const cur = (currency || 'AED').toUpperCase();
+      const locale = cur === 'PHP' ? 'en-PH' : 'en-AE';
+      const opts = { style: 'currency', currency: cur, maximumFractionDigits: cur === 'AED' ? 0 : 2 };
+      try {
+        return new Intl.NumberFormat(locale, opts).format(Number(value) || 0);
+      } catch (e) {
+        return `${Number(value) || 0} ${cur}`;
+      }
     }
 
     function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }

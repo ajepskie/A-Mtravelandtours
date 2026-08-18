@@ -187,3 +187,150 @@ window.addEventListener('scroll', () => {
     ? 'rgba(15,23,42,0.98)'
     : 'rgba(15,23,42,0.85)';
 });
+
+/**
+ * Preview the confirmation inside the page
+ */
+function previewConfirmation() {
+  const phone = document.getElementById('company-phone').value || '[Phone Number]';
+  const email = document.getElementById('company-email').value || '[Email Address]';
+  const website = document.getElementById('company-website').value || '[Website]';
+  const address = document.getElementById('company-address').value || '[Office Address]';
+  const client = document.getElementById('client-name').value || '[CLIENT NAME]';
+  const passport = document.getElementById('passport-number').value || '[PASSPORT NUMBER]';
+  const rate = document.getElementById('discounted-rate').value || '[AMOUNT] AED';
+
+  const preview = document.getElementById('confirmation-preview');
+  preview.style.color = 'inherit';
+  preview.innerHTML = `
+    <div style="background:#fff;color:#0f172a;padding:22px;border-radius:8px;">
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:12px;">
+        <img src="assets/images/am-logo-horizontal-with-tagline.png" alt="AM Travel & Tours" style="max-width:220px;" />
+      </div>
+
+      <div style="margin-top:6px;">
+        <div style="font-weight:700;margin-bottom:6px">A&M TRAVEL AND TOURS</div>
+        <div style="font-size:0.95rem;color:#374151">${phone} | ${email} | ${website}</div>
+        <div style="font-size:0.9rem;color:#6b7280;margin-top:6px">${address}</div>
+      </div>
+
+      <hr style="margin:14px 0;border:none;border-top:1px solid #e5e7eb" />
+
+      <h3 style="margin:6px 0 12px 0">VISA CHANGE CONFIRMATION:</h3>
+      <div style="font-weight:700;margin-bottom:6px">90 Days Inside the Country Visa Change</div>
+      <div style="margin:12px 0">
+        <div><strong>CLIENT NAME:</strong> ${client}</div>
+        <div><strong>PASSPORT NUMBER:</strong> ${passport}</div>
+        <div><strong>DISCOUNTED RATE:</strong> ${rate}</div>
+      </div>
+
+      <div style="background:#fef3c7;padding:10px;border-radius:6px;margin-bottom:12px">
+        <strong>NOTE:</strong> IF FINES APPEARED, YOU NEED TO SETTLE. YOU WILL BE GUIDED ACCORDINGLY.
+      </div>
+
+      <h4 style="margin:8px 0">Terms and Conditions:</h4>
+      <ol style="color:#374151">
+        <li>Visa Approval is up to immigration solely.</li>
+        <li>A&M Travel and Tours will apply tourist Visa in the guidance of DTCM Rules. In case of any rejection due to any reason we will not be responsible for Application charge.</li>
+        <li>If person does not leave UAE within required time as per visa then all fines will be paid by Applicant / Guarantor of Applicant.</li>
+        <li>In case of all kind of over stays or absconding of applicant all fines will be paid by Applicant / Guarantor of application.</li>
+        <li>Visa is non-refundable.</li>
+        <li>Overstay fine will be shouldered by the client.</li>
+      </ol>
+
+      <div style="margin-top:18px">
+        <div style="margin-bottom:30px">CONFIRMED BY:</div>
+        <div style="border-top:1px dashed #e5e7eb;padding-top:10px">NAME AND SIGNATURE:</div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Generate and download the confirmation as a PDF using html2pdf
+ */
+function generateConfirmationPDF() {
+  // Build the same content used for preview
+  const phone = document.getElementById('company-phone').value || '[Phone Number]';
+  const email = document.getElementById('company-email').value || '[Email Address]';
+  const website = document.getElementById('company-website').value || '[Website]';
+  const address = document.getElementById('company-address').value || '[Office Address]';
+  const client = document.getElementById('client-name').value || '[CLIENT NAME]';
+  const passport = document.getElementById('passport-number').value || '[PASSPORT NUMBER]';
+  const rate = document.getElementById('discounted-rate').value || '[AMOUNT] AED';
+
+  const wrapper = document.createElement('div');
+  wrapper.style.padding = '18px';
+  wrapper.style.fontFamily = "'DM Sans', Arial, sans-serif";
+  wrapper.style.color = '#0f172a';
+  wrapper.innerHTML = `
+    <div style="padding:18px;">
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:12px;">
+        <img src="assets/images/am-logo-horizontal-with-tagline.png" alt="AM Travel & Tours" style="max-width:260px;" />
+      </div>
+
+      <div style="margin-top:6px;">
+        <div style="font-weight:700;margin-bottom:6px">A&M TRAVEL AND TOURS</div>
+        <div style="font-size:0.95rem;color:#374151">${phone} | ${email} | ${website}</div>
+        <div style="font-size:0.9rem;color:#6b7280;margin-top:6px">${address}</div>
+      </div>
+
+      <hr style="margin:14px 0;border:none;border-top:1px solid #e5e7eb" />
+
+      <h3 style="margin:6px 0 12px 0">VISA CHANGE CONFIRMATION:</h3>
+      <div style="font-weight:700;margin-bottom:6px">90 Days Inside the Country Visa Change</div>
+      <div style="margin:12px 0">
+        <div><strong>CLIENT NAME:</strong> ${client}</div>
+        <div><strong>PASSPORT NUMBER:</strong> ${passport}</div>
+        <div><strong>DISCOUNTED RATE:</strong> ${rate} AED</div>
+      </div>
+
+      <div style="background:#fff3cd;padding:10px;border-radius:6px;margin-bottom:12px">
+        <strong>NOTE:</strong> IF FINES APPEARED, YOU NEED TO SETTLE. YOU WILL BE GUIDED ACCORDINGLY.
+      </div>
+
+      <h4 style="margin:8px 0">Terms and Conditions:</h4>
+      <ol style="color:#374151">
+        <li>Visa Approval is up to immigration solely.</li>
+        <li>A&M Travel and Tours will apply tourist Visa in the guidance of DTCM Rules. In case of any rejection due to any reason we will not be responsible for Application charge.</li>
+        <li>If person does not leave UAE within required time as per visa then all fines will be paid by Applicant / Guarantor of Applicant.</li>
+        <li>In case of all kind of over stays or absconding of applicant all fines will be paid by Applicant / Guarantor of application.</li>
+        <li>Visa is non-refundable.</li>
+        <li>Overstay fine will be shouldered by the client.</li>
+      </ol>
+
+      <div style="margin-top:18px">
+        <div style="margin-bottom:30px">CONFIRMED BY:</div>
+        <div style="border-top:1px dashed #e5e7eb;padding-top:10px">NAME AND SIGNATURE:</div>
+      </div>
+    </div>
+  `;
+
+  // Append to body (offscreen) so html2pdf can render images
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-9999px';
+  document.body.appendChild(wrapper);
+
+  const fileNameBase = (client && client.trim() ? client.trim().replace(/\s+/g, '_') : 'confirmation');
+  const opt = {
+    margin: 0.5,
+    filename: `${fileNameBase}_confirmation.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+
+  // Generate and download PDF
+  if (window.html2pdf) {
+    html2pdf().set(opt).from(wrapper).save().then(() => {
+      document.body.removeChild(wrapper);
+    }).catch(err => {
+      console.error('Error generating PDF:', err);
+      document.body.removeChild(wrapper);
+      alert('An error occurred while generating the PDF. Check console for details.');
+    });
+  } else {
+    document.body.removeChild(wrapper);
+    alert('PDF library not loaded. Please ensure html2pdf bundle is available.');
+  }
+}

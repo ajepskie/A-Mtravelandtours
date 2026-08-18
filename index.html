@@ -276,7 +276,54 @@
   </section>
 
   <!-- FOLLOW US -->
-  <section class="section follow-section" id="follow">
+  <!-- CONFIRMATION PAPERS -->
+    <section class="section" id="confirmation-papers">
+      <p class="section-label">Confirmation Papers</p>
+      <h2 class="section-title">Visa Change Confirmation</h2>
+      <p class="section-sub">Create and download confirmation papers for clients.</p>
+
+      <div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:18px;">
+        <div style="flex:1;min-width:260px;max-width:420px;background:var(--mid);padding:18px;border-radius:12px;">
+          <label style="display:block;margin-bottom:8px;font-weight:600">Company Phone
+            <input id="company-phone" class="form-input" placeholder="[Phone Number]" style="margin-top:6px; width:100%" />
+          </label>
+          <label style="display:block;margin-bottom:8px;font-weight:600">Company Email
+            <input id="company-email" class="form-input" placeholder="[Email Address]" style="margin-top:6px; width:100%" />
+          </label>
+          <label style="display:block;margin-bottom:8px;font-weight:600">Website
+            <input id="company-website" class="form-input" placeholder="[Website]" style="margin-top:6px; width:100%" />
+          </label>
+          <label style="display:block;margin-bottom:8px;font-weight:600">Office Address
+            <input id="company-address" class="form-input" placeholder="[Office Address]" style="margin-top:6px; width:100%" />
+          </label>
+          <hr style="margin:14px 0;opacity:0.08" />
+          <label style="display:block;margin-bottom:8px;font-weight:600">Client Name
+            <input id="client-name" class="form-input" placeholder="[CLIENT NAME]" style="margin-top:6px; width:100%" />
+          </label>
+          <label style="display:block;margin-bottom:8px;font-weight:600">Passport Number
+            <input id="passport-number" class="form-input" placeholder="[PASSPORT NUMBER]" style="margin-top:6px; width:100%" />
+          </label>
+          <label style="display:block;margin-bottom:8px;font-weight:600">Discounted Rate (AED)
+            <input id="discounted-rate" class="form-input" placeholder="[AMOUNT] AED" style="margin-top:6px; width:100%" />
+          </label>
+
+          <div style="display:flex;gap:12px;margin-top:12px;">
+            <button class="whatsapp-btn" onclick="generateConfirmationPDF()" style="padding:10px 14px">Download PDF</button>
+            <button class="nav-cta" onclick="previewConfirmation()" style="padding:10px 14px">Preview</button>
+          </div>
+
+          <p style="font-size:0.85rem;margin-top:10px;color:var(--muted)">Use the fields above to populate the confirmation paper. Click "Download PDF" to save a professional confirmation for the client.</p>
+        </div>
+
+        <div id="confirmation-preview" style="flex:1;min-width:300px;max-width:780px;background:linear-gradient(180deg,#0f172a, #05203a);padding:18px;border-radius:12px;color:white;">
+          <div style="opacity:0.9">Confirmation preview will appear here. Click Preview to see the formatted confirmation before downloading.</div>
+        </div>
+      </div>
+
+    </section>
+    <!-- END CONFIRMATION PAPERS -->
+
+    <section class="section follow-section" id="follow">
     <p class="section-label">Stay Connected</p>
     <h2 class="section-title">Follow AM Travel & Tours</h2>
     <p class="section-sub" style="margin: 0 auto 0; text-align:center;">Get travel tips, promos, and updates before anyone else. Follow us on social media.</p>
@@ -307,6 +354,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onload="initSupabaseClient()" onerror="handleSDKError()"></script>
 
   <!-- Main JavaScript - All app functionality is in this file -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
   <script src="script.js"></script>
 
   <!--Start of Tawk.to Script-->

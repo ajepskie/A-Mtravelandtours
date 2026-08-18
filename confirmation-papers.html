@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirmation Papers | A&M Travel & Tours</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="assets/logos.css" />
+  <style>
+    body {
+      background: linear-gradient(180deg, #071827 0%, #0b1f31 100%);
+      color: #f4f4f4;
+    }
+
+    .confirmation-page {
+      padding-top: 110px;
+      min-height: 100vh;
+    }
+
+    .confirmation-layout {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+      display: grid;
+      grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .confirmation-panel,
+    .confirmation-document-wrap {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+    }
+
+    .confirmation-panel {
+      position: sticky;
+      top: 100px;
+      padding: 28px 22px;
+    }
+
+    .confirmation-panel h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .confirmation-panel p {
+      color: #cbd5e1;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .confirmation-form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-group label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #93c5fd;
+    }
+
+    .field-group input,
+    .field-group textarea {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #fff;
+      font: inherit;
+      resize: vertical;
+      min-height: 46px;
+    }
+
+    .field-group textarea {
+      min-height: 96px;
+    }
+
+    .field-group input::placeholder,
+    .field-group textarea::placeholder {
+      color: rgba(226, 232, 240, 0.7);
+    }
+
+    .action-row {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .download-btn,
+    .secondary-btn {
+      border: none;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+    }
+
+    .download-btn {
+      background: linear-gradient(135deg, #0096C7, #023E8A);
+      color: #fff;
+    }
+
+    .secondary-btn {
+      background: transparent;
+      color: #dbeafe;
+      border: 1px solid rgba(191, 219, 254, 0.3);
+    }
+
+    .download-btn:hover,
+    .secondary-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    .confirmation-document-wrap {
+      padding: 18px;
+    }
+
+    .confirmation-document {
+      background: #fff;
+      color: #111827;
+      border-radius: 16px;
+      padding: 30px 30px 18px;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+    }
+
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      border-bottom: 2px solid rgba(2, 62, 138, 0.18);
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+    }
+
+    .doc-logo {
+      width: min(290px, 100%);
+      max-height: 88px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .doc-contact {
+      font-size: 0.84rem;
+      line-height: 1.8;
+      color: #1f2937;
+      text-align: right;
+      font-weight: 500;
+    }
+
+    .doc-title {
+      text-align: center;
+      font-size: clamp(1.05rem, 2vw, 1.5rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #0f172a;
+      margin: 8px 0 15px;
+    }
+
+    .doc-subtitle {
+      text-align: center;
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 1.05rem;
+      margin-bottom: 20px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(200px, 1fr));
+      gap: 14px 30px;
+      margin-top: 16px;
+      margin-bottom: 18px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      font-size: 0.96rem;
+      line-height: 1.6;
+      color: #111827;
+      border-bottom: 1px dashed rgba(15, 23, 42, 0.18);
+      padding-bottom: 8px;
+    }
+
+    .info-row strong {
+      font-weight: 800;
+      min-width: 170px;
+      color: #111827;
+    }
+
+    .note-box {
+      margin-top: 18px;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      background: rgba(254, 242, 242, 0.9);
+      color: #991b1b;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .terms {
+      margin-top: 18px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(15, 23, 42, 0.12);
+      color: #111827;
+    }
+
+    .terms h3 {
+      margin-bottom: 10px;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #0f172a;
+    }
+
+    .terms ol {
+      padding-left: 24px;
+      display: grid;
+      gap: 8px;
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
+    .signature-row {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 18px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(15, 23, 42, 0.12);
+      color: #111827;
+      font-size: 0.95rem;
+    }
+
+    .signature-box {
+      display: grid;
+      gap: 10px;
+    }
+
+    .signature-line {
+      border-bottom: 1px solid rgba(15, 23, 42, 0.5);
+      min-height: 40px;
+      width: 100%;
+    }
+
+    .note-small {
+      color: rgba(15, 23, 42, 0.7);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 980px) {
+      .confirmation-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .confirmation-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .confirmation-document {
+        padding: 18px 18px 14px;
+      }
+
+      .doc-header {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .doc-contact {
+        text-align: center;
+      }
+
+      .info-grid,
+      .signature-row {
+        grid-template-columns: 1fr;
+      }
+
+      .info-row strong {
+        min-width: 0;
+        display: block;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      nav,
+      .confirmation-panel,
+      .no-print {
+        display: none !important;
+      }
+
+      .confirmation-page {
+        padding-top: 0;
+      }
+
+      .confirmation-layout {
+        padding: 0;
+      }
+
+      .confirmation-document-wrap {
+        padding: 0;
+        border: none;
+        box-shadow: none;
+      }
+
+      .confirmation-document {
+        border-radius: 0;
+        box-shadow: none;
+        padding: 12mm 12mm 8mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo-container">
+      <img src="assets/images/am-logo-horizontal-with-tagline.png" alt="AM Travel & Tours Logo" class="logo-image nav-logo-img">
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="index.html#services">Services</a></li>
+      <li><a href="index.html#destinations">Destinations</a></li>
+      <li><a href="confirmation-papers.html" class="active">Confirmation Papers</a></li>
+    </ul>
+    <a class="nav-cta" href="index.html">Back to Home</a>
+  </nav>
+
+  <main class="confirmation-page">
+    <div class="confirmation-layout">
+      <aside class="confirmation-panel">
+        <h1>Confirmation Papers</h1>
+        <p>Prepare a polished visa change confirmation for each client. Fill in the client details and export the final document as a PDF.</p>
+
+        <form class="confirmation-form" id="confirmation-form">
+          <div class="field-group">
+            <label for="phone">Phone Number</label>
+            <input id="phone" type="text" value="+971 4 123 4567" placeholder="[Phone Number]" />
+          </div>
+
+          <div class="field-group">
+            <label for="email">Email Address</label>
+            <input id="email" type="text" value="info@amtravelandtours.com" placeholder="[Email Address]" />
+          </div>
+
+          <div class="field-group">
+            <label for="website">Website</label>
+            <input id="website" type="text" value="www.amtravelandtours.com" placeholder="[Website]" />
+          </div>
+
+          <div class="field-group">
+            <label for="officeAddress">Office Address</label>
+            <textarea id="officeAddress" placeholder="[Office Address]">Dubai, UAE</textarea>
+          </div>
+
+          <div class="field-group">
+            <label for="clientName">Client Name</label>
+            <input id="clientName" type="text" value="JOHN DOE" placeholder="[CLIENT NAME]" />
+          </div>
+
+          <div class="field-group">
+            <label for="passportNumber">Passport Number</label>
+            <input id="passportNumber" type="text" value="P1234567" placeholder="[PASSPORT NUMBER]" />
+          </div>
+
+          <div class="field-group">
+            <label for="discountedRate">Discounted Rate</label>
+            <input id="discountedRate" type="text" value="3200 AED" placeholder="[AMOUNT] AED" />
+          </div>
+
+          <div class="field-group">
+            <label for="visaDuration">Visa Duration</label>
+            <input id="visaDuration" type="text" value="90 Days Inside the Country Visa Change" placeholder="Visa title" />
+          </div>
+
+          <div class="field-group">
+            <label for="notes">Fines Note</label>
+            <textarea id="notes" placeholder="Note to client">IF FINES APPEARED, YOU NEED TO SETTLE. YOU WILL BE GUIDED ACCORDINGLY.</textarea>
+          </div>
+
+          <div class="action-row no-print">
+            <button class="download-btn" id="downloadPdf" type="button">Download PDF</button>
+            <button class="secondary-btn" id="printPdf" type="button">Print</button>
+          </div>
+        </form>
+      </aside>
+
+      <section class="confirmation-document-wrap">
+        <article class="confirmation-document" id="confirmationDocument">
+          <div class="doc-header">
+            <img src="assets/images/am-logo-horizontal-with-tagline.png" alt="A&M Travel and Tours Logo" class="doc-logo" />
+            <div class="doc-contact">
+              <div id="docPhone">+971 4 123 4567</div>
+              <div id="docEmail">info@amtravelandtours.com</div>
+              <div id="docWebsite">www.amtravelandtours.com</div>
+              <div id="docOfficeAddress">Dubai, UAE</div>
+            </div>
+          </div>
+
+          <div class="doc-title">Visa Change Confirmation</div>
+          <div class="doc-subtitle" id="docVisaDuration">90 Days Inside the Country Visa Change</div>
+
+          <div class="info-grid">
+            <div class="info-row"><strong>CLIENT NAME:</strong> <span id="docClientName">JOHN DOE</span></div>
+            <div class="info-row"><strong>PASSPORT NUMBER:</strong> <span id="docPassportNumber">P1234567</span></div>
+            <div class="info-row" style="grid-column: 1 / -1;"><strong>DISCOUNTED RATE:</strong> <span id="docRate">3200 AED</span></div>
+          </div>
+
+          <div class="note-box" id="docNote">IF FINES APPEARED, YOU NEED TO SETTLE. YOU WILL BE GUIDED ACCORDINGLY.</div>
+
+          <div class="terms">
+            <h3>Terms and Conditions:</h3>
+            <ol>
+              <li>Visa Approval is up to immigration solely.</li>
+              <li>A&M Travel and Tours will apply tourist Visa in the guidance of DTCM Rules. In case of any rejection due to any reason we will not be responsible for Application charge.</li>
+              <li>If person does not leave UAE within required time as per visa then all fines will be paid by Applicant / Guarantor of Applicant.</li>
+              <li>In case of all kind of over stays or absconding of applicant all fines will be paid by Applicant / Guarantor of application.</li>
+              <li>Visa is non-refundable.</li>
+              <li>Overstay fine will be shouldered by the client.</li>
+            </ol>
+          </div>
+
+          <div class="signature-row">
+            <div class="signature-box">
+              <div>CONFIRMED BY:</div>
+              <div class="signature-line"></div>
+              <div class="note-small">NAME AND SIGNATURE:</div>
+            </div>
+            <div class="signature-box">
+              <div>&nbsp;</div>
+              <div class="signature-line"></div>
+              <div class="note-small">AUTHORIZED SIGNATORY</div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    const formInputs = {
+      phone: document.getElementById('phone'),
+      email: document.getElementById('email'),
+      website: document.getElementById('website'),
+      officeAddress: document.getElementById('officeAddress'),
+      clientName: document.getElementById('clientName'),
+      passportNumber: document.getElementById('passportNumber'),
+      discountedRate: document.getElementById('discountedRate'),
+      visaDuration: document.getElementById('visaDuration'),
+      notes: document.getElementById('notes')
+    };
+
+    const docEls = {
+      phone: document.getElementById('docPhone'),
+      email: document.getElementById('docEmail'),
+      website: document.getElementById('docWebsite'),
+      officeAddress: document.getElementById('docOfficeAddress'),
+      clientName: document.getElementById('docClientName'),
+      passportNumber: document.getElementById('docPassportNumber'),
+      discountedRate: document.getElementById('docRate'),
+      visaDuration: document.getElementById('docVisaDuration'),
+      notes: document.getElementById('docNote')
+    };
+
+    function updateDocument() {
+      docEls.phone.textContent = formInputs.phone.value || '[Phone Number]';
+      docEls.email.textContent = formInputs.email.value || '[Email Address]';
+      docEls.website.textContent = formInputs.website.value || '[Website]';
+      docEls.officeAddress.textContent = formInputs.officeAddress.value || '[Office Address]';
+      docEls.clientName.textContent = formInputs.clientName.value || '[CLIENT NAME]';
+      docEls.passportNumber.textContent = formInputs.passportNumber.value || '[PASSPORT NUMBER]';
+      docEls.discountedRate.textContent = formInputs.discountedRate.value || '[AMOUNT] AED';
+      docEls.visaDuration.textContent = formInputs.visaDuration.value || '90 Days Inside the Country Visa Change';
+      docEls.notes.textContent = formInputs.notes.value || 'IF FINES APPEARED, YOU NEED TO SETTLE. YOU WILL BE GUIDED ACCORDINGLY.';
+    }
+
+    Object.values(formInputs).forEach((input) => {
+      input.addEventListener('input', updateDocument);
+      input.addEventListener('change', updateDocument);
+    });
+
+    document.getElementById('downloadPdf').addEventListener('click', () => {
+      const element = document.getElementById('confirmationDocument');
+
+      const opt = {
+        margin: [10, 12, 10, 12],
+        filename: 'am-travel-visa-change-confirmation.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait'
+        }
+      };
+
+      if (window.html2pdf) {
+        html2pdf().set(opt).from(element).save();
+      } else {
+        window.print();
+      }
+    });
+
+    document.getElementById('printPdf').addEventListener('click', () => {
+      window.print();
+    });
+
+    updateDocument();
+  </script>
+</body>
+</html>
