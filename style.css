@@ -46,21 +46,18 @@ body {
 nav {
   position: fixed;
   top: 0;
-  left: var(--sidebar-w);
+  left: 0;
   right: 0;
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 18px 24px;
-  width: calc(100% - var(--sidebar-w));
+  justify-content: space-between;
+  padding: 18px 5%;
   background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease;
 }
-
-.nav-links { margin-left: 18px; }
 
 .nav-logo {
   font-family: 'Playfair Display', serif;
