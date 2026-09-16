@@ -60,6 +60,10 @@ function normalizeRole(role) {
   return value;
 }
 
+function getProfileRole(profile) {
+  return normalizeRole(profile?.Roles || profile?.role);
+}
+
 // ── Check if role is admin level (can see all clients)
 function isAdminLevel(role) {
   const normalizedRole = normalizeRole(role);
@@ -173,7 +177,7 @@ async function getProfile(userId) {
     if (data) {
       return {
         ...data,
-        role: normalizeRole(data.Roles || data.role || 'Employee / Worker')
+        role: getProfileRole(data)
       };
     }
 

@@ -595,12 +595,12 @@
         <tr>
           <td>${u.full_name || '—'}</td>
           <td>${u.email || '—'}</td>
-          <td><span class="role-pill role-${u.role}">${roleLabel(u.role)}</span></td>
+          <td><span class="role-pill role-${getProfileRole(u)}">${roleLabel(u.Roles || u.role)}</span></td>
           <td>${formatDate(u.created_at)}</td>
           <td>
             <div style="display:flex;gap:6px;">
               ${u.id !== currentUserId ? `
-                <button onclick="openEditUserModal('${u.id}','${u.full_name}','${u.role}')" class="btn btn-primary" style="padding:4px 10px;font-size:0.75rem;">✏️</button>
+                <button onclick="openEditUserModal('${u.id}','${u.full_name}','${getProfileRole(u)}')" class="btn btn-primary" style="padding:4px 10px;font-size:0.75rem;">✏️</button>
                 <button onclick="openDeleteUserModal('${u.id}','${u.full_name}')" class="btn btn-danger" style="padding:4px 10px;font-size:0.75rem;">🗑️</button>
               ` : '<span style="color:var(--muted);font-size:0.75rem;">(You)</span>'}
             </div>
@@ -627,7 +627,7 @@
 
       const { error } = await supabaseClient
         .from('profiles')
-        .update({ role: newRole })
+        .update({ Roles: normalizeRole(newRole) })
         .eq('id', editingUserId);
 
       if (error) {
@@ -695,6 +695,5 @@
   </script>
 </body>
 </html>
-
 
 

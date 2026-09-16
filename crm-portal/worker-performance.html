@@ -164,14 +164,24 @@
     });
 
     async function loadWorkers() {
-      // Get all workers
-      const { data: workers } = await supabaseClient
+      // Profiles use the quoted "Roles" column in Supabase. Read both legacy
+      // and canonical shapes, then normalize before filtering.
+      const { data: profiles, error } = await supabaseClient
         .from('profiles')
         .select('*')
-        .eq('role', 'worker')
         .order('full_name', { ascending: true });
 
-      if (!workers || workers.length === 0) {
+      if (error) {
+        console.error('Unable to load worker profiles:', error);
+        document.getElementById('workersTable').innerHTML = '<tr><td colspan="8" class="empty-row">Error loading workers.</td></tr>';
+        return;
+      }
+
+      const workers = (profiles || [])
+        .filter(profile => getProfileRole(profile) === ROLES.WORKER)
+        .map(profile => ({ ...profile, role: getProfileRole(profile) }));
+
+      if (workers.length === 0) {
         document.getElementById('workersTable').innerHTML = '<tr><td colspan="8" class="empty-row">No workers found.</td></tr>';
         return;
       }
@@ -292,14 +302,8 @@
     document.getElementById('searchInput').addEventListener('input', filterWorkers);
     document.getElementById('dateFilter').addEventListener('change', () => renderWorkers(allWorkers));
 
-    function roleLabel(r) {
-      return { superadmin: '👑 Super Admin', admin: '🔧 Admin', worker: '👷 Worker', tester: '🧪 Tester' }[r] || r;
-    }
-
     function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }
     function formatDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
   </script>
 </body>
 </html>
-
-

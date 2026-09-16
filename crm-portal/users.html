@@ -171,12 +171,12 @@
       tbody.innerHTML = data.map(u => `
         <tr>
           <td>${u.full_name || '—'}</td>
-          <td><span class="role-pill role-${u.role}">${roleLabel(u.role)}</span></td>
+          <td><span class="role-pill role-${getProfileRole(u)}">${roleLabel(u.Roles || u.role)}</span></td>
           <td>${formatDate(u.created_at)}</td>
           <td>
             <div style="display:flex;gap:8px;">
               ${u.id !== currentUserId ? `
-                <button onclick="openEditModal('${u.id}','${u.full_name}','${u.role}')" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">✏️ Role</button>
+                <button onclick="openEditModal('${u.id}','${u.full_name}','${getProfileRole(u)}')" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">✏️ Role</button>
                 <button onclick="openDeleteModal('${u.id}','${u.full_name}')" class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;">🗑️ Delete</button>
               ` : '<span style="color:var(--muted);font-size:0.8rem;">You</span>'}
             </div>
@@ -228,7 +228,7 @@
         await supabaseClient.from('profiles').insert([{
           id: data.user.id,
           full_name: name,
-          role
+          Roles: normalizeRole(role)
         }]);
 
         await logActivity('CREATE_USER', `Created user: ${name} (${role})`);
@@ -264,7 +264,7 @@
 
       const { error } = await supabaseClient
         .from('profiles')
-        .update({ role: newRole })
+        .update({ Roles: normalizeRole(newRole) })
         .eq('id', editUserId);
 
       if (error) {
@@ -331,5 +331,4 @@
   </script>
 </body>
 </html>
-
 
