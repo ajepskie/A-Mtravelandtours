@@ -60,6 +60,8 @@ body {
   color: var(--text);
   min-height: 100vh;
   display: flex;
+  max-width: 100vw;
+  overflow-x: hidden;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -528,7 +530,7 @@ html[data-theme="light"] .btn-ghost:hover {
   flex-wrap: wrap;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 980px) {
   :root {
     --sidebar-w: 0px;
   }
@@ -568,6 +570,7 @@ html[data-theme="light"] .btn-ghost:hover {
     margin-left: 0;
     padding: 20px 16px 28px;
     width: 100%;
+    max-width: 100vw;
   }
 
   .topbar {
@@ -588,10 +591,6 @@ html[data-theme="light"] .btn-ghost:hover {
     padding: 16px;
   }
 
-  .data-table {
-    min-width: 760px;
-  }
-
   .toast {
     right: 16px;
     left: 16px;
@@ -600,10 +599,6 @@ html[data-theme="light"] .btn-ghost:hover {
 }
 
 @media (min-width: 701px) and (max-width: 980px) {
-  :root {
-    --sidebar-w: 220px;
-  }
-
   .sidebar {
     padding: 22px 12px;
   }
@@ -612,9 +607,6 @@ html[data-theme="light"] .btn-ghost:hover {
     padding: 24px 20px;
   }
 
-  .data-table {
-    min-width: 760px;
-  }
 }
 
 /* ── TOAST ── */

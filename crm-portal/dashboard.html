@@ -21,6 +21,14 @@
 
     .main-content { padding: 24px 26px 36px; }
 
+    .dashboard-section,
+    .stats-grid,
+    .dashboard-hero,
+    .card {
+      min-width: 0;
+      max-width: 100%;
+    }
+
     .topbar {
       display: flex;
       justify-content: space-between;
@@ -209,6 +217,10 @@
     @media (max-width: 980px) {
       .dashboard-section { grid-template-columns: 1fr; }
       .main-content { padding: 18px 16px 28px; }
+      .topbar {
+        width: 100%;
+        max-width: 100%;
+      }
     }
   </style>
 </head>
