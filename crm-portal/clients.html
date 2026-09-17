@@ -169,9 +169,12 @@
       }
 
       allClients = data || [];
-      const creatorIds = [...new Set(allClients.map(client => client.created_by).filter(Boolean))];
+      const canSeeSalesperson = [ROLES.SUPER_ADMIN, ROLES.ADMIN].includes(normalizeRole(currentRole));
+      const creatorIds = canSeeSalesperson
+        ? [...new Set(allClients.map(client => client.created_by).filter(Boolean))]
+        : [];
       let creatorNames = {};
-      if (creatorIds.length > 0) {
+      if (canSeeSalesperson && creatorIds.length > 0) {
         const { data: creators, error: creatorsError } = await supabaseClient
           .from('profiles')
           .select('id, full_name, email')
@@ -186,8 +189,10 @@
       }
       allClients = allClients.map(client => ({
         ...client,
-        creatorName: creatorNames[client.created_by]
-          || (client.created_by === currentUserId ? (currentUserName || 'You') : 'Sales team member')
+        creatorName: canSeeSalesperson
+          ? (creatorNames[client.created_by]
+            || (client.created_by === currentUserId ? (currentUserName || 'You') : 'Sales team member'))
+          : ''
       }));
       renderClients(allClients);
     }
@@ -215,7 +220,7 @@
         return `
           <tr>
             <td>
-              <div class="client-salesperson">${c.creatorName}</div>
+              ${c.creatorName ? `<div class="client-salesperson">${c.creatorName}</div>` : ''}
               <a href="client-detail.html?id=${c.id}" class="client-link">${c.full_name}</a>
             </td>
             <td>${c.passport_number || '—'}</td>
