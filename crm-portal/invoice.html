@@ -464,6 +464,10 @@
             <h3>Currency</h3>
             <div class="invoice-details-content" id="previewCurrency">AED</div>
           </div>
+          <div class="invoice-details-section">
+            <h3>Created By</h3>
+            <div class="invoice-details-content" id="previewCreatedBy">—</div>
+          </div>
         </div>
 
         <!-- Line Items Table -->
@@ -538,6 +542,7 @@
   <script>
     let currentRole = '';
     let currentUser = null;
+    let currentCreatorName = '';
     let currentCurrency = 'AED';
     let allQuotes = [];
     let selectedQuote = null;
@@ -550,6 +555,7 @@
       currentUser = user;
       const profile = await getProfile(user.id);
       currentRole = profile.role;
+      currentCreatorName = profile.full_name || user.email || 'Unknown user';
 
       // Update sidebar
       document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
@@ -695,6 +701,7 @@
       document.getElementById('previewDueDate').textContent = dueDate;
       document.getElementById('previewClientName').textContent = selectedQuote.client_name;
       document.getElementById('previewTravelDate').textContent = `Travel Date: ${selectedQuote.travel_date || '—'}`;
+      document.getElementById('previewCreatedBy').textContent = currentCreatorName;
 
       const items = JSON.parse(selectedQuote.items || '[]');
       const tbody = document.getElementById('invoiceTableBody');
@@ -785,6 +792,7 @@
       const dueDate = document.getElementById('dueDate').value;
       doc.text(`Issue Date: ${issueDate}`, pageW - 80, 72);
       doc.text(`Due Date: ${dueDate}`, pageW - 80, 78);
+      doc.text(`Created By: ${currentCreatorName}`, pageW - 80, 84);
 
       // ── LINE ITEMS TABLE ──
       const items = JSON.parse(selectedQuote.items || '[]');
@@ -880,6 +888,7 @@
         discount: selectedQuote.discount,
         grand_total: selectedQuote.grand_total,
         created_by: currentUser.id,
+        created_by_name: currentCreatorName,
         status: 'Draft'
       };
 
@@ -920,4 +929,3 @@
   </script>
 </body>
 </html>
-

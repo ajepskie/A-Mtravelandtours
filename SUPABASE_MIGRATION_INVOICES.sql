@@ -18,10 +18,15 @@ CREATE TABLE IF NOT EXISTS invoices (
   discount DECIMAL(12, 2),
   grand_total DECIMAL(12, 2),
   created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  created_by_name VARCHAR(255),
   status VARCHAR(50) DEFAULT 'Draft',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Add this column when the invoices table already exists.
+ALTER TABLE invoices
+  ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(255);
 
 -- Create indexes for faster lookups
 CREATE INDEX IF NOT EXISTS invoices_invoice_number_idx ON invoices(invoice_number);
