@@ -83,13 +83,14 @@
           <thead>
             <tr>
               <th>Full Name</th>
+              <th>Email</th>
               <th>Role</th>
               <th>Created At</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="usersTable">
-            <tr><td colspan="4" class="empty-row">Loading...</td></tr>
+            <tr><td colspan="5" class="empty-row">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -165,20 +166,21 @@
       const tbody = document.getElementById('usersTable');
 
       if (error || !data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">No users found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No users found.</td></tr>';
         return;
       }
 
       tbody.innerHTML = data.map(u => `
         <tr>
           <td>${u.full_name || '—'}</td>
+          <td>${u.email || '—'}</td>
           <td><span class="role-pill role-${getProfileRole(u)}">${roleLabel(u.Roles || u.role)}</span></td>
           <td>${formatDate(u.created_at)}</td>
           <td>
             <div style="display:flex;gap:8px;">
               ${u.id !== currentUserId ? `
-                <button onclick="openEditModal('${u.id}','${u.full_name}','${getProfileRole(u)}')" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">✏️ Role</button>
-                <button onclick="openDeleteModal('${u.id}','${u.full_name}')" class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;">🗑️ Delete</button>
+                <button onclick="openEditModal('${u.id}','${u.full_name}','${getProfileRole(u)}')" class="btn btn-primary icon-action" title="Change role" aria-label="Change role">✏️</button>
+                <button onclick="openDeleteModal('${u.id}','${u.full_name}')" class="btn btn-danger icon-action" title="Delete employee" aria-label="Delete employee">🗑️</button>
               ` : '<span style="color:var(--muted);font-size:0.8rem;">You</span>'}
             </div>
           </td>
@@ -229,6 +231,7 @@
         await supabaseClient.from('profiles').insert([{
           id: data.user.id,
           full_name: name,
+          email,
           Roles: normalizeRole(role)
         }]);
 

@@ -25,6 +25,15 @@ AS $$
 $$;
 
 -- 2) Helper function: create profile on auth signup
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS email text;
+
+UPDATE public.profiles p
+SET email = u.email
+FROM auth.users u
+WHERE p.id = u.id
+  AND (p.email IS NULL OR p.email = '');
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -32,8 +41,8 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, "Roles")
-  VALUES (NEW.id, 'Employee / Worker')
+  INSERT INTO public.profiles (id, email, "Roles")
+  VALUES (NEW.id, NEW.email, 'Employee / Worker')
   ON CONFLICT (id) DO NOTHING;
 
   RETURN NEW;
@@ -130,6 +139,19 @@ USING (
 WITH CHECK (
   id = auth.uid()
   OR EXISTS (
+    SELECT 1
+    FROM public.profiles p
+    WHERE p.id = auth.uid()
+      AND p."Roles" = 'Super Admin'
+  )
+);
+
+-- Only Super Admin can remove employee profiles.
+CREATE POLICY "profiles_delete_superadmin_only"
+ON public.profiles
+FOR DELETE
+USING (
+  EXISTS (
     SELECT 1
     FROM public.profiles p
     WHERE p.id = auth.uid()

@@ -165,6 +165,22 @@
       }
 
       allClients = data || [];
+      const creatorIds = [...new Set(allClients.map(client => client.created_by).filter(Boolean))];
+      let creatorNames = {};
+      if (creatorIds.length > 0) {
+        const { data: creators } = await supabaseClient
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', creatorIds);
+        creatorNames = Object.fromEntries((creators || []).map(profile => [
+          profile.id,
+          profile.full_name || profile.email || 'Unknown salesperson'
+        ]));
+      }
+      allClients = allClients.map(client => ({
+        ...client,
+        creatorName: creatorNames[client.created_by] || 'Unknown salesperson'
+      }));
       renderClients(allClients);
     }
 
@@ -190,7 +206,10 @@
 
         return `
           <tr>
-            <td><a href="client-detail.html?id=${c.id}" class="client-link">${c.full_name}</a></td>
+            <td>
+              <div class="client-salesperson">${c.creatorName}</div>
+              <a href="client-detail.html?id=${c.id}" class="client-link">${c.full_name}</a>
+            </td>
             <td>${c.passport_number || '—'}</td>
             <td>${c.contact || '—'}</td>
             <td>${c.nationality || '—'}</td>
@@ -202,9 +221,9 @@
             ${showTimestamps ? `<td class="ts-col">${formatDate(c.updated_at)}</td>` : '<td class="ts-col" style="display:none"></td>'}
             <td>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <a href="client-detail.html?id=${c.id}" class="btn btn-ghost" style="padding:6px 12px;font-size:0.8rem;">👁 View</a>
-                ${showEditBtn ? `<a href="edit-client.html?id=${c.id}" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">✏️ Edit</a>` : ''}
-                ${showDelete ? `<button onclick="openDeleteModal('${c.id}','${c.full_name}')" class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;">🗑️</button>` : ''}
+                <a href="client-detail.html?id=${c.id}" class="btn btn-ghost icon-action" title="View client" aria-label="View client">👁</a>
+                ${showEditBtn ? `<a href="edit-client.html?id=${c.id}" class="btn btn-primary icon-action" title="Edit client" aria-label="Edit client">✏️</a>` : ''}
+                ${showDelete ? `<button onclick="openDeleteModal('${c.id}','${c.full_name}')" class="btn btn-danger icon-action" title="Delete client" aria-label="Delete client">🗑️</button>` : ''}
               </div>
             </td>
           </tr>
@@ -276,4 +295,3 @@
   </script>
 </body>
 </html>
-

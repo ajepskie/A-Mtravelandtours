@@ -51,7 +51,7 @@
     <!-- WORKERS TABLE -->
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">👷 Team Members Performance</h2>
+        <h2 class="card-title" id="teamMembersTitle">👷 Team Members Performance</h2>
         <button class="btn btn-ghost" style="padding:6px 14px;font-size:0.8rem;" onclick="loadWorkers()">🔄 Refresh</button>
       </div>
       <div class="table-wrap">
@@ -131,6 +131,17 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="removeUserModal">
+    <div class="modal">
+      <h3>🗑️ Remove Employee</h3>
+      <p>Are you sure you want to remove <strong id="removeUserName"></strong>? This removes their CRM profile and access to the dashboard.</p>
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="confirmRemoveUser()">Yes, Remove</button>
+        <button class="btn btn-ghost" onclick="closeRemoveUserModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -138,11 +149,15 @@
   <script src="js/auth.js"></script>
   <script>
     let currentRole = '';
+    let currentUserId = null;
     let allWorkers = [];
     let selectedWorkerId = null;
+    let removeUserId = null;
 
     window.addEventListener('load', async () => {
       const user = await requireAuth();
+      if (!user) return;
+      currentUserId = user.id;
       const profile = await getProfile(user.id);
       currentRole = profile.role;
 
@@ -156,6 +171,8 @@
       document.getElementById('sidebarRole').textContent = roleLabel(currentRole);
       applyRoleUI(currentRole);
       setActiveNav();
+      document.getElementById('teamMembersTitle').textContent =
+        currentRole === ROLES.SUPER_ADMIN ? '👥 All Employees Performance' : '👷 Team Members Performance';
 
       // Set today's date as default filter
       const today = new Date().toISOString().split('T')[0];
@@ -179,7 +196,9 @@
       }
 
       const workers = (profiles || [])
-        .filter(profile => getProfileRole(profile) === ROLES.WORKER)
+        .filter(profile => currentRole === ROLES.SUPER_ADMIN
+          ? getProfileRole(profile) !== ROLES.SUPER_ADMIN
+          : getProfileRole(profile) === ROLES.WORKER)
         .map(profile => ({ ...profile, role: getProfileRole(profile) }));
 
       if (workers.length === 0) {
@@ -227,7 +246,12 @@
             <td><strong>${contactedToday}</strong></td>
             <td>${conversionRate}%</td>
             <td>
-              <button onclick="openWorkerDetail('${worker.id}','${worker.full_name}')" class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;">👁 View</button>
+              <div style="display:flex;gap:6px;">
+                <button onclick="openWorkerDetail('${worker.id}','${worker.full_name}')" class="btn btn-primary icon-action" title="View performance" aria-label="View performance">👁</button>
+                ${currentRole === ROLES.SUPER_ADMIN
+                  ? `<button onclick="openRemoveUserModal('${worker.id}','${worker.full_name || worker.email || 'this user'}')" class="btn btn-danger icon-action" title="Remove employee" aria-label="Remove employee">🗑️</button>`
+                  : ''}
+              </div>
             </td>
           </tr>
         `;
@@ -291,6 +315,37 @@
       selectedWorkerId = null;
     }
 
+    function openRemoveUserModal(userId, userName) {
+      if (currentRole !== ROLES.SUPER_ADMIN || userId === currentUserId) return;
+      removeUserId = userId;
+      document.getElementById('removeUserName').textContent = userName;
+      document.getElementById('removeUserModal').classList.add('show');
+    }
+
+    function closeRemoveUserModal() {
+      document.getElementById('removeUserModal').classList.remove('show');
+      removeUserId = null;
+    }
+
+    async function confirmRemoveUser() {
+      if (!removeUserId || currentRole !== ROLES.SUPER_ADMIN) return;
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .delete()
+        .eq('id', removeUserId);
+
+      if (error) {
+        showToast('Unable to remove this employee.', 'error');
+        return;
+      }
+
+      await logActivity('DELETE_USER', `Removed user ID: ${removeUserId}`);
+      showToast('Employee removed successfully!', 'success');
+      closeRemoveUserModal();
+      loadWorkers();
+    }
+
     // Search & Filter
     function filterWorkers() {
       const search = document.getElementById('searchInput').value.toLowerCase();
@@ -305,6 +360,13 @@
 
     function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }
     function formatDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast toast-${type} show`;
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
   </script>
 </body>
 </html>
