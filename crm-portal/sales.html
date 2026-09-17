@@ -1000,17 +1000,6 @@
 
     function slugify(s) { return (s || '').toLowerCase().replace(/\s+/g, '-'); }
 
-    function roleLabel(r) {
-      const normalized = normalizeRole(r);
-      return {
-        [ROLES.SUPER_ADMIN]: '👑 Super Admin',
-        [ROLES.ADMIN]: '🔧 Admin',
-        [ROLES.ACCOUNTS]: '💼 Accounts',
-        [ROLES.WORKER]: '👷 Worker',
-        [ROLES.TESTER]: '🧪 Tester'
-      }[normalized] || normalized;
-    }
-
     function showToast(msg, type = 'success') {
       const t = document.getElementById('toast');
       t.textContent = msg;

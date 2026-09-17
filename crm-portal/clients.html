@@ -122,6 +122,7 @@
     let allClients = [];
     let currentRole = '';
     let currentUserId = '';
+    let currentUserName = '';
     let deleteId = null;
 
     window.addEventListener('load', async () => {
@@ -129,6 +130,7 @@
       currentUserId = user.id;
       const profile = await getProfile(user.id);
       currentRole = profile.role;
+      currentUserName = profile.full_name || user.email || '';
 
       // Apply role UI
       applyRoleUI(currentRole);
@@ -170,18 +172,22 @@
       const creatorIds = [...new Set(allClients.map(client => client.created_by).filter(Boolean))];
       let creatorNames = {};
       if (creatorIds.length > 0) {
-        const { data: creators } = await supabaseClient
+        const { data: creators, error: creatorsError } = await supabaseClient
           .from('profiles')
           .select('id, full_name, email')
           .in('id', creatorIds);
+        if (creatorsError) {
+          console.warn('Unable to load client creators:', creatorsError);
+        }
         creatorNames = Object.fromEntries((creators || []).map(profile => [
           profile.id,
-          profile.full_name || profile.email || 'Unknown salesperson'
+          profile.full_name || profile.email || null
         ]));
       }
       allClients = allClients.map(client => ({
         ...client,
-        creatorName: creatorNames[client.created_by] || 'Unknown salesperson'
+        creatorName: creatorNames[client.created_by]
+          || (client.created_by === currentUserId ? (currentUserName || 'You') : 'Sales team member')
       }));
       renderClients(allClients);
     }
