@@ -13,8 +13,8 @@
     /* ── SALES SPECIFIC STYLES ── */
     .currency-toggle {
       display: flex;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: var(--surface-hover);
+      border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
     }
@@ -99,7 +99,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 8px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid var(--border);
       font-size: 0.9rem;
     }
 
@@ -130,8 +130,8 @@
     }
 
     .add-item-btn {
-      background: rgba(255,255,255,0.04);
-      border: 1px dashed rgba(255,255,255,0.15);
+      background: var(--surface-hover);
+      border: 1px dashed var(--border);
       color: var(--muted);
       border-radius: 10px;
       padding: 10px;
@@ -221,7 +221,10 @@
 </head>
 <body>
   <aside class="sidebar">
-    <div class="sidebar-logo">A-M <span>Travel</span></div>
+    <div class="sidebar-logo-container">
+      <img src="../assets/images/am-logomark.png" alt="A-M Travel Logo" class="logo-image">
+      <div class="sidebar-logo">A-M <span>Travel &amp; Tours</span></div>
+    </div>
     <div class="sidebar-role" id="sidebarRole">Loading...</div>
             <nav class="sidebar-nav">
       <a href="dashboard.html" class="nav-item">📊 Dashboard</a>

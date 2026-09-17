@@ -52,23 +52,46 @@ function initThemeToggle() {
     menuButton.setAttribute('aria-label', 'Open navigation menu');
     menuButton.setAttribute('aria-expanded', 'false');
     menuButton.textContent = '☰';
-    menuButton.onclick = () => {
-      const isOpen = document.body.classList.toggle('nav-open');
-      menuButton.setAttribute('aria-expanded', String(isOpen));
-      menuButton.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
-      menuButton.textContent = isOpen ? '×' : '☰';
-    };
+    menuButton.onclick = toggleMobileNav;
     sidebar.parentNode.insertBefore(menuButton, sidebar);
 
     sidebar.querySelectorAll('.nav-item').forEach(link => {
       link.addEventListener('click', () => {
-        document.body.classList.remove('nav-open');
-        menuButton.setAttribute('aria-expanded', 'false');
-        menuButton.setAttribute('aria-label', 'Open navigation menu');
-        menuButton.textContent = '☰';
+        closeMobileNav();
       });
     });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeMobileNav();
+    });
+
+    document.addEventListener('click', event => {
+      if (document.body.classList.contains('nav-open')
+        && !sidebar.contains(event.target)
+        && event.target !== menuButton) {
+        closeMobileNav();
+      }
+    });
   }
+}
+
+function toggleMobileNav() {
+  const button = document.querySelector('.mobile-menu-toggle');
+  const isOpen = document.body.classList.toggle('nav-open');
+  if (!button) return;
+  button.setAttribute('aria-expanded', String(isOpen));
+  button.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+  button.textContent = isOpen ? '×' : '☰';
+}
+
+function closeMobileNav() {
+  if (!document.body.classList.contains('nav-open')) return;
+  document.body.classList.remove('nav-open');
+  const button = document.querySelector('.mobile-menu-toggle');
+  if (!button) return;
+  button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-label', 'Open navigation menu');
+  button.textContent = '☰';
 }
 
 // Role definitions — must match exactly what's in Supabase profiles table
