@@ -361,10 +361,50 @@ textarea { resize: vertical; min-height: 100px; }
 }
 
 .icon-action {
+  position: relative;
   width: 38px;
   height: 34px;
   justify-content: center;
   padding: 6px !important;
+}
+
+.icon-action::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  transform: translate(-50%, 4px);
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 10;
+}
+
+.icon-action:hover::after,
+.icon-action:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.action-view { color: #1d4ed8; }
+.action-edit { color: #ffffff; }
+.action-delete { color: #ffffff; }
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.actions-cell > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .client-salesperson {
@@ -451,6 +491,17 @@ html[data-theme="light"] .btn-ghost:hover {
   gap: 12px;
   margin-top: 24px;
   flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    flex-wrap: wrap;
+  }
+
+  .topbar-right,
+  .topbar-actions {
+    margin-left: auto;
+  }
 }
 
 /* ── TOAST ── */

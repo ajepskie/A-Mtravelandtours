@@ -33,7 +33,12 @@ function initThemeToggle() {
     button.onclick = toggleTheme;
     actions.appendChild(button);
 
-    const insertTarget = topbar.querySelector('.topbar-right') || topbar;
+    let insertTarget = topbar.querySelector('.topbar-right');
+    if (!insertTarget) {
+      insertTarget = document.createElement('div');
+      insertTarget.className = 'topbar-right';
+      topbar.appendChild(insertTarget);
+    }
     insertTarget.appendChild(actions);
   });
 

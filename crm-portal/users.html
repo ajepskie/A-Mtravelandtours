@@ -23,7 +23,7 @@
       <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
       <a href="profile.html" class="nav-item">👤 My Profile</a>
       <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
-      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
+      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Sales Performance</a>
       <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
       <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
     </nav>
@@ -151,7 +151,9 @@
         return;
       }
 
-      document.getElementById('sidebarRole').textContent = roleLabel(profile.role);
+      const sidebarRole = document.getElementById('sidebarRole');
+      sidebarRole.textContent = roleLabel(profile.role);
+      sidebarRole.className = `sidebar-role role-pill role-${roleClass(profile.role)}`;
       applyRoleUI(profile.role);
       setActiveNav();
       loadUsers();
@@ -174,7 +176,7 @@
         <tr>
           <td>${u.full_name || '—'}</td>
           <td>${u.email || '—'}</td>
-          <td><span class="role-pill role-${getProfileRole(u)}">${roleLabel(u.Roles || u.role)}</span></td>
+          <td><span class="role-pill role-${roleClass(getProfileRole(u))}">${roleLabel(u.Roles || u.role)}</span></td>
           <td>${formatDate(u.created_at)}</td>
           <td>
             <div style="display:flex;gap:8px;">
@@ -308,7 +310,7 @@
       }
 
       await logActivity('DELETE_USER', `Deleted user ID: ${deleteUserId}`);
-      showToast('Employee removed successfully!', 'success');
+      showToast('Team member removed successfully!', 'success');
       closeDeleteModal();
       loadUsers();
     }

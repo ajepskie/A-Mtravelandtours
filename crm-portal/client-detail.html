@@ -23,7 +23,7 @@
       <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
       <a href="profile.html" class="nav-item">👤 My Profile</a>
       <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
-      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
+      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Sales Performance</a>
       <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
       <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
     </nav>
@@ -123,7 +123,9 @@
       const profile = await getProfile(user.id);
       const role = profile.role;
 
-      document.getElementById('sidebarRole').textContent = roleLabel(role);
+      const sidebarRole = document.getElementById('sidebarRole');
+      sidebarRole.textContent = roleLabel(role);
+      sidebarRole.className = `sidebar-role role-pill role-${roleClass(role)}`;
       applyRoleUI(role);
       setActiveNav();
 
@@ -182,4 +184,3 @@
   </script>
 </body>
 </html>
-

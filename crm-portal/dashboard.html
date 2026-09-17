@@ -9,19 +9,6 @@
   <link rel="stylesheet" href="css/crm.css"/>
   <link rel="stylesheet" href="../assets/logos.css"/>
   <style>
-    :root {
-      --bg: #07111f;
-      --surface: #101a2e;
-      --surface-2: #16233b;
-      --text: #f5f7fb;
-      --muted: #8ba0bf;
-      --border: rgba(255,255,255,0.08);
-      --accent: #5d8cff;
-      --accent-soft: rgba(93,140,255,0.16);
-      --success: #31c48d;
-      --warning: #f59e0b;
-    }
-
     html { font-size: 13px; }
     body {
       margin: 0;
@@ -29,7 +16,7 @@
       font-size: 15px;
       line-height: 1.5;
       color: var(--text);
-      background: linear-gradient(180deg, #07111f 0%, #0b1425 100%);
+      background: var(--bg);
     }
 
     .main-content {
@@ -64,11 +51,11 @@
     }
 
     .hero-card {
-      background: linear-gradient(135deg, rgba(93,140,255,0.22), rgba(255,255,255,0.03));
+      background: linear-gradient(135deg, var(--accent-glow), var(--surface-hover));
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 18px 20px;
-      box-shadow: 0 8px 30px rgba(2,8,23,0.18);
+      box-shadow: 0 8px 30px var(--shadow);
     }
 
     .hero-card h2 {
@@ -161,7 +148,7 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 16px 16px 12px;
-      box-shadow: 0 8px 24px rgba(2,8,23,0.16);
+      box-shadow: 0 8px 24px var(--shadow);
     }
 
     .card-header {
@@ -183,7 +170,7 @@
     .data-table td {
       text-align: left;
       padding: 10px 8px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid var(--border);
       font-size: 0.9rem;
     }
 
@@ -195,10 +182,10 @@
       font-weight: 600;
     }
 
-    .data-table td a { color: #dce9ff; text-decoration: none; }
+    .data-table td a { color: var(--text); text-decoration: none; }
 
     .btn-link {
-      color: #9cb6ff;
+      color: var(--accent);
       text-decoration: none;
       font-size: 0.85rem;
       font-weight: 600;
@@ -211,15 +198,15 @@
       border-radius: 999px;
       font-size: 0.78rem;
       font-weight: 600;
-      background: rgba(255,255,255,0.08);
+      background: var(--surface-strong);
       color: var(--text);
       white-space: nowrap;
     }
 
-    .status-approved { background: rgba(49,196,141,0.16); color: #7fe2b2; }
-    .status-pending { background: rgba(245,158,11,0.16); color: #f7c96e; }
-    .status-rejected { background: rgba(248,113,113,0.16); color: #fda4af; }
-    .status-draft { background: rgba(93,140,255,0.16); color: #9cb6ff; }
+    .status-approved { background: rgba(22,163,74,0.14); color: var(--success); }
+    .status-pending { background: rgba(217,119,6,0.14); color: var(--warning); }
+    .status-rejected { background: rgba(220,38,38,0.14); color: var(--error); }
+    .status-draft { background: var(--accent-glow); color: var(--accent); }
 
     .sidebar-role { font-size: 0.9rem; }
 
@@ -596,7 +583,7 @@
         <tr>
           <td>${u.full_name || '—'}</td>
           <td>${u.email || '—'}</td>
-          <td><span class="role-pill role-${getProfileRole(u)}">${roleLabel(u.Roles || u.role)}</span></td>
+          <td><span class="role-pill role-${roleClass(getProfileRole(u))}">${roleLabel(u.Roles || u.role)}</span></td>
           <td>${formatDate(u.created_at)}</td>
           <td>
             <div style="display:flex;gap:6px;">
@@ -668,7 +655,7 @@
       }
 
       await logActivity('DELETE_USER', `Deleted user ID: ${deletingUserId}`);
-      showToast('Employee removed successfully!', 'success');
+      showToast('Team member removed successfully!', 'success');
       closeDeleteUserModal();
       loadEmployees();
     }
