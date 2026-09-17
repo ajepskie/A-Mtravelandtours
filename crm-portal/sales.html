@@ -7,13 +7,14 @@
 <title>A-M Travel CRM — Sales & Quotation</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/crm.css"/>
+    <link rel="stylesheet" href="../assets/logos.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <style>
     /* ── SALES SPECIFIC STYLES ── */
     .currency-toggle {
       display: flex;
-      background: var(--surface-hover);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
@@ -56,7 +57,7 @@
     .line-items-table td {
       padding: 10px 8px;
       vertical-align: middle;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
     }
 
     .line-items-table input,
@@ -88,8 +89,8 @@
     .delete-row-btn:hover { background: rgba(239,68,68,0.2); }
 
     .summary-box {
-      background: rgba(37,99,235,0.05);
-      border: 1px solid rgba(37,99,235,0.15);
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
       border-radius: 16px;
       padding: 24px;
     }
@@ -113,7 +114,7 @@
       align-items: center;
       padding: 16px 0 0;
       margin-top: 8px;
-      border-top: 2px solid rgba(37,99,235,0.3);
+      border-top: 2px solid var(--accent);
     }
 
     .summary-total-label {
@@ -147,6 +148,30 @@
       border-color: var(--accent);
       color: var(--accent);
       background: rgba(37,99,235,0.05);
+    }
+
+    .sales-topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 700px) {
+      .sales-topbar-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .sales-topbar-actions .currency-toggle,
+      .sales-topbar-actions .btn {
+        flex: 1;
+      }
+
+      .summary-wrap {
+        grid-template-columns: 1fr !important;
+      }
     }
 
     .quote-ref {
@@ -247,7 +272,7 @@
         <h1 class="page-title">Sales & Quotation</h1>
         <p class="page-sub">Build quotes, calculate margins, generate PDF</p>
       </div>
-      <div style="display:flex;gap:12px;align-items:center;">
+      <div class="sales-topbar-actions">
         <div class="currency-toggle">
           <button class="currency-btn active" id="btnAED" onclick="setCurrency('AED')">AED</button>
           <button class="currency-btn" id="btnPHP" onclick="setCurrency('PHP')">PHP</button>
