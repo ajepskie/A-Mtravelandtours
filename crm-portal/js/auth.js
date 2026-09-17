@@ -43,6 +43,32 @@ function initThemeToggle() {
   });
 
   applyTheme(theme);
+
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar && !sidebar.querySelector('.mobile-menu-toggle')) {
+    const menuButton = document.createElement('button');
+    menuButton.type = 'button';
+    menuButton.className = 'mobile-menu-toggle';
+    menuButton.setAttribute('aria-label', 'Open navigation menu');
+    menuButton.setAttribute('aria-expanded', 'false');
+    menuButton.textContent = '☰';
+    menuButton.onclick = () => {
+      const isOpen = document.body.classList.toggle('nav-open');
+      menuButton.setAttribute('aria-expanded', String(isOpen));
+      menuButton.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+      menuButton.textContent = isOpen ? '×' : '☰';
+    };
+    sidebar.parentNode.insertBefore(menuButton, sidebar);
+
+    sidebar.querySelectorAll('.nav-item').forEach(link => {
+      link.addEventListener('click', () => {
+        document.body.classList.remove('nav-open');
+        menuButton.setAttribute('aria-expanded', 'false');
+        menuButton.setAttribute('aria-label', 'Open navigation menu');
+        menuButton.textContent = '☰';
+      });
+    });
+  }
 }
 
 // Role definitions — must match exactly what's in Supabase profiles table
