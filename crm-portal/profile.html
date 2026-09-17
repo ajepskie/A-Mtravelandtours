@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script>const theme = localStorage.getItem("amt-theme") || "dark";document.documentElement.setAttribute("data-theme", theme);</script>
+  <title>A-M Travel CRM — My Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/crm.css"/>
+  <link rel="stylesheet" href="../assets/logos.css"/>
+  <style>
+    html { font-size: 13px; }
+    body { margin: 0; font-family: 'Inter', sans-serif; font-size: 15px; background: linear-gradient(180deg, #07111f 0%, #0b1425 100%); }
+    .main-content { padding: 24px 26px 36px; max-width: 1040px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .page-title { font-size: 1.38rem; font-weight: 700; margin: 0 0 4px; }
+    .page-sub { font-size: .95rem; color: var(--muted); margin: 0; }
+    .profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .profile-grid .card:first-child { grid-column: 1 / -1; }
+    .card h2 { margin: 0 0 6px; font-size: 1rem; }
+    .card > p { color: var(--muted); margin: 0 0 20px; font-size: .9rem; }
+    .readonly-value { color: var(--text); padding: 11px 14px; background: var(--surface-hover); border: 1px solid var(--border); border-radius: 10px; min-height: 20px; }
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+    .status-message { display: none; padding: 11px 14px; border-radius: 10px; margin-top: 16px; font-size: .88rem; }
+    .status-message.show { display: block; }
+    .status-success { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.25); color: var(--success); }
+    .status-error { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.25); color: var(--error); }
+    @media (max-width: 700px) {
+      .profile-grid { grid-template-columns: 1fr; }
+      .profile-grid .card:first-child { grid-column: auto; }
+      .main-content { padding: 18px 16px 28px; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo-container">
+      <img src="../assets/images/am-logomark.png" alt="A-M Travel Logo" class="logo-image">
+      <div class="sidebar-logo">A-M <span>Travel</span></div>
+    </div>
+    <div class="sidebar-role" id="sidebarRole">Loading...</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+      <a href="clients.html" class="nav-item">👥 Clients</a>
+      <a href="add-client.html" class="nav-item">➕ Add Client</a>
+      <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
+      <a href="profile.html" class="nav-item">👤 My Profile</a>
+      <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
+      <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
+      <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
+      <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
+    </nav>
+    <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">My Profile</h1>
+        <p class="page-sub">Manage your account details and password.</p>
+      </div>
+      <div class="topbar-right"><div class="role-pill" id="rolePill">—</div></div>
+    </div>
+
+    <div class="profile-grid">
+      <section class="card">
+        <h2>Personal details</h2>
+        <p>Update the name shown across the CRM. Your role is managed by an administrator.</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="fullName">Name</label>
+            <input id="fullName" type="text" maxlength="120" autocomplete="name" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <div class="readonly-value" id="email">—</div>
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <div class="readonly-value" id="role">—</div>
+          </div>
+          <div class="form-group">
+            <label>Registered</label>
+            <div class="readonly-value" id="registeredAt">—</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="saveProfileBtn" onclick="saveProfile()">Save details</button>
+        </div>
+        <div class="status-message" id="profileMessage" role="status"></div>
+      </section>
+
+      <section class="card">
+        <h2>Change password</h2>
+        <p>Choose a new password if you remember your current password or are already signed in.</p>
+        <div class="form-group">
+          <label for="newPassword">New password</label>
+          <input id="newPassword" type="password" minlength="6" autocomplete="new-password" required>
+        </div>
+        <div class="form-group" style="margin-top:16px;">
+          <label for="confirmPassword">Confirm new password</label>
+          <input id="confirmPassword" type="password" minlength="6" autocomplete="new-password" required>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="changePasswordBtn" onclick="changePassword()">Change password</button>
+        </div>
+        <div class="status-message" id="passwordMessage" role="status"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentUser;
+    let currentProfile;
+
+    window.addEventListener('load', async () => {
+      currentUser = await requireAuth();
+      if (!currentUser) return;
+      currentProfile = await getProfile(currentUser.id);
+      const role = currentProfile.role;
+      document.getElementById('fullName').value = currentProfile.full_name || '';
+      document.getElementById('email').textContent = currentUser.email || '—';
+      document.getElementById('role').textContent = roleLabel(role);
+      document.getElementById('registeredAt').textContent = formatDate(currentProfile.created_at || currentUser.created_at);
+      document.getElementById('sidebarRole').textContent = roleLabel(role);
+      document.getElementById('sidebarRole').className = `sidebar-role role-pill role-${roleClass(role)}`;
+      document.getElementById('rolePill').textContent = roleLabel(role);
+      document.getElementById('rolePill').className = `role-pill role-${roleClass(role)}`;
+      applyRoleUI(role);
+      setActiveNav();
+    });
+
+    function formatDate(value) {
+      return value ? new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+    }
+
+    function showMessage(id, message, type) {
+      const element = document.getElementById(id);
+      element.textContent = message;
+      element.className = `status-message show status-${type}`;
+    }
+
+    async function saveProfile() {
+      const fullName = document.getElementById('fullName').value.trim();
+      if (!fullName) {
+        showMessage('profileMessage', 'Please enter your name.', 'error');
+        return;
+      }
+      const button = document.getElementById('saveProfileBtn');
+      button.disabled = true;
+      const { error } = await supabaseClient.from('profiles').update({ full_name: fullName }).eq('id', currentUser.id);
+      button.disabled = false;
+      if (error) {
+        showMessage('profileMessage', 'Unable to save your details. Please try again.', 'error');
+        return;
+      }
+      currentProfile.full_name = fullName;
+      showMessage('profileMessage', 'Your details were saved.', 'success');
+    }
+
+    async function changePassword() {
+      const password = document.getElementById('newPassword').value;
+      const confirmation = document.getElementById('confirmPassword').value;
+      if (password.length < 6) {
+        showMessage('passwordMessage', 'Your password must be at least 6 characters.', 'error');
+        return;
+      }
+      if (password !== confirmation) {
+        showMessage('passwordMessage', 'The passwords do not match.', 'error');
+        return;
+      }
+      const button = document.getElementById('changePasswordBtn');
+      button.disabled = true;
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      button.disabled = false;
+      if (error) {
+        showMessage('passwordMessage', error.message || 'Unable to change your password.', 'error');
+        return;
+      }
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+      showMessage('passwordMessage', 'Your password was changed successfully.', 'success');
+    }
+  </script>
+</body>
+</html>
