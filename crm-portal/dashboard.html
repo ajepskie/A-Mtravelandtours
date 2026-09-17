@@ -244,7 +244,7 @@
       <a href="sales.html" class="nav-item">💰 Sales & Quotes</a>
       <a href="profile.html" class="nav-item">👤 My Profile</a>
               <a href="invoice.html" class="nav-item admin-only" style="display:none">🧾 Invoice</a>
-              <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Workers</a>
+              <a href="worker-performance.html" class="nav-item admin-only" style="display:none">📈 Sales Performance</a>
               <a href="backup.html" class="nav-item admin-only" style="display:none">💾 Backup</a>
               <a href="users.html" class="nav-item superadmin-only" style="display:none">⚙️ Manage Users</a>
             </nav>
@@ -354,7 +354,7 @@
       <div class="form-group" style="margin-bottom:24px;">
         <label>New Role</label>
         <select id="editUserRole">
-          <option value="worker">👷 Worker</option>
+          <option value="worker">💰 Sales</option>
           <option value="admin">🔧 Admin</option>
           <option value="tester">🧪 Tester</option>
           <option value="superadmin">👑 Super Admin</option>
@@ -370,7 +370,7 @@
   <!-- DELETE USER MODAL -->
   <div class="modal-overlay" id="deleteUserModal">
     <div class="modal">
-      <h3>🗑️ Delete Employee</h3>
+      <h3>🗑️ Delete Team Member</h3>
       <p>Are you sure you want to remove <strong id="deleteUserNameText"></strong> from the system? This action cannot be undone.</p>
       <div class="btn-row">
         <button class="btn btn-danger" onclick="confirmDeleteUser()">Yes, Delete</button>
@@ -588,7 +588,7 @@
 
       const tbody = document.getElementById('employeesTable');
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No employees yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No team members yet.</td></tr>';
         return;
       }
 
@@ -696,4 +696,3 @@
   </script>
 </body>
 </html>
-

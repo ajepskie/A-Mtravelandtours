@@ -111,7 +111,7 @@ function roleLabel(role) {
     'Super Admin': '👑 Super Admin',
     'Admin': '🔧 Admin',
     'Accounts': '💼 Accounts',
-    'Employee / Worker': '👷 Worker',
+    'Employee / Worker': '💰 Sales',
     'Tester': '🧪 Tester'
   };
   return labels[role] || role;
