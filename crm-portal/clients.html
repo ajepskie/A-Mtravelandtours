@@ -154,7 +154,7 @@
       const isAdmin = isAdminLevel(currentRole);
       let query = supabaseClient
         .from('clients')
-        .select('*, profiles(full_name)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       // Workers & Testers only see their own clients; admins and accounts see everything.
@@ -170,6 +170,35 @@
       }
 
       allClients = data || [];
+      const showCreator = isAdminLevel(currentRole) && canViewClientCreator(currentRole);
+      const creatorIds = showCreator
+        ? [...new Set(allClients.map(client => client.created_by).filter(Boolean))]
+        : [];
+      let creatorNames = {};
+
+      if (showCreator && creatorIds.length > 0) {
+        const { data: creators, error: creatorsError } = await supabaseClient
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', creatorIds);
+
+        if (creatorsError) {
+          console.warn('Unable to load client creators:', creatorsError);
+        }
+
+        creatorNames = Object.fromEntries((creators || []).map(profile => [
+          profile.id,
+          profile.full_name || profile.email || null
+        ]));
+      }
+
+      allClients = allClients.map(client => ({
+        ...client,
+        creatorName: showCreator
+          ? (creatorNames[client.created_by]
+            || (client.created_by === currentUserId ? (currentUserName || 'You') : 'Sales team member'))
+          : ''
+      }));
       renderClients(allClients);
     }
 
@@ -206,7 +235,7 @@
             <td>${c.trip_type || '—'}</td>
             <td>${formatDate(c.registered_date)}</td>
             <td>${c.source_of_lead || '—'}</td>
-            ${showCreator ? `<td class="admin-only">${c.profiles?.full_name || '—'}</td>` : '<td class="admin-only" style="display:none"></td>'}
+            ${showCreator ? `<td class="admin-only">${c.creatorName || '—'}</td>` : '<td class="admin-only" style="display:none"></td>'}
             <td><span class="status-badge status-${slugify(c.status)}">${c.status || '—'}</span></td>
             ${showTimestamps ? `<td class="ts-col">${formatDate(c.created_at)}</td>` : '<td class="ts-col" style="display:none"></td>'}
             ${showTimestamps ? `<td class="ts-col">${formatDate(c.updated_at)}</td>` : '<td class="ts-col" style="display:none"></td>'}
