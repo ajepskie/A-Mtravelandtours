@@ -102,13 +102,13 @@
     </div>
   </main>
 
-  <!-- DELETE MODAL -->
+  <!-- REMOVE FROM LIST MODAL -->
   <div class="modal-overlay" id="deleteModal">
     <div class="modal">
-      <h3>🗑️ Delete Client</h3>
-      <p>Are you sure you want to delete <strong id="deleteClientName"></strong>? This action cannot be undone.</p>
+      <h3>🗑️ Remove Client From List</h3>
+      <p>Remove <strong id="deleteClientName"></strong> from this list? The client will not be deleted from the database.</p>
       <div class="btn-row">
-        <button class="btn btn-danger" onclick="confirmDelete()">Yes, Delete</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Yes, Remove</button>
         <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       </div>
     </div>
@@ -289,17 +289,12 @@
       deleteId = null;
     }
 
-    async function confirmDelete() {
+    function confirmDelete() {
       if (!deleteId) return;
-      const { error } = await supabaseClient.from('clients').delete().eq('id', deleteId);
-      if (error) {
-        showToast('Error deleting client: ' + error.message, 'error');
-      } else {
-        await logActivity('DELETE_CLIENT', `Deleted client ID: ${deleteId}`);
-        showToast('Client deleted successfully.', 'success');
-        closeModal();
-        loadClients();
-      }
+      allClients = allClients.filter(client => client.id !== deleteId);
+      renderClients(allClients);
+      showToast('Client removed from this list. The database record was kept.', 'success');
+      closeModal();
     }
 
     // ── HELPERS ──
