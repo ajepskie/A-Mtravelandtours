@@ -142,6 +142,12 @@ function canViewTimestamps(role) {
   return [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTS].includes(normalizedRole);
 }
 
+// ── Check if role can see who created a client
+function canViewClientCreator(role) {
+  const normalizedRole = normalizeRole(role);
+  return [ROLES.SUPER_ADMIN, ROLES.ADMIN].includes(normalizedRole);
+}
+
 // ── Check if role can access backup
 function canAccessBackup(role) {
   const normalizedRole = normalizeRole(role);

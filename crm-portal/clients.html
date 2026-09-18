@@ -169,7 +169,7 @@
       }
 
       allClients = data || [];
-      const canSeeSalesperson = [ROLES.SUPER_ADMIN, ROLES.ADMIN].includes(normalizeRole(currentRole));
+      const canSeeSalesperson = canViewClientCreator(currentRole);
       const creatorIds = canSeeSalesperson
         ? [...new Set(allClients.map(client => client.created_by).filter(Boolean))]
         : [];

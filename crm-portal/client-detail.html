@@ -79,6 +79,10 @@
           <label>Status</label>
           <div class="detail-value" id="d_status">—</div>
         </div>
+        <div class="detail-field admin-only" id="creatorField" style="display:none">
+          <label>Created By / Salesperson</label>
+          <div class="detail-value" id="d_creator">—</div>
+        </div>
       </div>
       <div class="detail-field" style="margin-top:8px;">
         <label>Notes</label>
@@ -149,6 +153,27 @@
       document.getElementById('d_source').textContent = data.source_of_lead || '—';
       document.getElementById('d_status').textContent = data.status || '—';
       document.getElementById('d_notes').textContent = data.notes || 'No notes.';
+
+      if (canViewClientCreator(role)) {
+        const creatorField = document.getElementById('creatorField');
+        const creatorValue = document.getElementById('d_creator');
+        creatorField.style.display = '';
+
+        if (data.created_by) {
+          const { data: creator, error: creatorError } = await supabaseClient
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', data.created_by)
+            .maybeSingle();
+
+          if (creatorError) {
+            console.warn('Unable to load client creator:', creatorError);
+          }
+          creatorValue.textContent = creator?.full_name || creator?.email || 'Sales team member';
+        } else {
+          creatorValue.textContent = 'Not recorded';
+        }
+      }
 
       const badge = document.getElementById('statusBadge');
       badge.textContent = data.status || '—';
