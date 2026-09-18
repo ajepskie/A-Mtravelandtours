@@ -87,6 +87,7 @@
               <th>Trip Type</th>
               <th>Registered Date</th>
               <th>Source</th>
+              <th class="admin-only" id="createdByHeader">Created By</th>
               <th>Status</th>
               <th class="ts-col">Created At</th>
               <th class="ts-col">Updated At</th>
@@ -94,7 +95,7 @@
             </tr>
           </thead>
           <tbody id="clientsTable">
-            <tr><td colspan="11" class="empty-row">Loading...</td></tr>
+            <tr><td colspan="12" class="empty-row">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -153,7 +154,7 @@
       const isAdmin = isAdminLevel(currentRole);
       let query = supabaseClient
         .from('clients')
-        .select('*')
+        .select('*, profiles(full_name)')
         .order('created_at', { ascending: false });
 
       // Workers & Testers only see their own clients; admins and accounts see everything.
@@ -169,42 +170,19 @@
       }
 
       allClients = data || [];
-      const canSeeSalesperson = canViewClientCreator(currentRole);
-      const creatorIds = canSeeSalesperson
-        ? [...new Set(allClients.map(client => client.created_by).filter(Boolean))]
-        : [];
-      let creatorNames = {};
-      if (canSeeSalesperson && creatorIds.length > 0) {
-        const { data: creators, error: creatorsError } = await supabaseClient
-          .from('profiles')
-          .select('id, full_name, email')
-          .in('id', creatorIds);
-        if (creatorsError) {
-          console.warn('Unable to load client creators:', creatorsError);
-        }
-        creatorNames = Object.fromEntries((creators || []).map(profile => [
-          profile.id,
-          profile.full_name || profile.email || null
-        ]));
-      }
-      allClients = allClients.map(client => ({
-        ...client,
-        creatorName: canSeeSalesperson
-          ? (creatorNames[client.created_by]
-            || (client.created_by === currentUserId ? (currentUserName || 'You') : 'Sales team member'))
-          : ''
-      }));
       renderClients(allClients);
     }
 
     function renderClients(clients) {
       const tbody = document.getElementById('clientsTable');
       const showTimestamps = canViewTimestamps(currentRole);
+      const showCreator = isAdminLevel(currentRole) && canViewClientCreator(currentRole);
       const showEdit = canEdit(currentRole);
       const showDelete = canDelete(currentRole);
+      document.getElementById('createdByHeader').style.display = showCreator ? '' : 'none';
 
       if (clients.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="empty-row">${
+        tbody.innerHTML = `<tr><td colspan="12" class="empty-row">${
           isAdminLevel(currentRole)
             ? 'No clients found.'
             : 'You have no assigned clients yet. Add your first client!'
@@ -220,7 +198,6 @@
         return `
           <tr>
             <td>
-              ${c.creatorName ? `<div class="client-salesperson">${c.creatorName}</div>` : ''}
               <a href="client-detail.html?id=${c.id}" class="client-link">${c.full_name}</a>
             </td>
             <td>${c.passport_number || '—'}</td>
@@ -229,6 +206,7 @@
             <td>${c.trip_type || '—'}</td>
             <td>${formatDate(c.registered_date)}</td>
             <td>${c.source_of_lead || '—'}</td>
+            ${showCreator ? `<td class="admin-only">${c.profiles?.full_name || '—'}</td>` : '<td class="admin-only" style="display:none"></td>'}
             <td><span class="status-badge status-${slugify(c.status)}">${c.status || '—'}</span></td>
             ${showTimestamps ? `<td class="ts-col">${formatDate(c.created_at)}</td>` : '<td class="ts-col" style="display:none"></td>'}
             ${showTimestamps ? `<td class="ts-col">${formatDate(c.updated_at)}</td>` : '<td class="ts-col" style="display:none"></td>'}
